@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from dataset import VolleyballDataset
+from .dataset import VolleyballDataset
 
 def get_data_loader(pkl_path,
                     videos_path,

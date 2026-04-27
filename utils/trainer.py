@@ -4,7 +4,7 @@ import time
 import torch
 from tqdm import tqdm
 
-from evaluator import evaluate
+from .evaluator import evaluate
 
 
 def train_one_epoch(model, loader, criterion, optimizer, device, epoch):
