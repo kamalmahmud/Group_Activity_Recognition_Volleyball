@@ -78,3 +78,4 @@ ehthumbs.db
 .env.local
 .env.*.local
 secrets.json
+congigs/

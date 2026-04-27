@@ -1,42 +1,49 @@
-import os.path
-from torch.utils.data import Dataset
-from torchvision.io import read_image, ImageReadMode
-from volleyball_annot_loader import load_video_annot
+from torch.utils.data import DataLoader
+from dataset import VolleyballDataset
 
-DATASET_ROOT = '/kaggle/input/group-activity-recognition-volleyball/videos'
+def get_data_loader(pkl_path,
+                    videos_path,
+                    mode: str,
+                    frame_transform,
+                    batch_size: int,
+                    num_workers: int,
+                    crop_transform ):
 
+    train_dataset = VolleyballDataset(pkl_path,
+                                      videos_path,
+                                      split="train",
+                                      mode=mode,
+                                      frame_transform=frame_transform, )
 
-class VolleyballDataset(Dataset):
-    def __init__(self, videos_path: str, transforms=None, split='train'):
-        self.videos_path = videos_path
-        self.transform = transforms
-        self.split = split
-        self.splits = {
-            'train': [1, 3, 6, 7, 10, 13, 15, 16, 18, 22, 23, 31, 32, 36, 38, 39, 40, 41, 42, 48, 50, 52, 53, 54],
-            'val': [0, 2, 8, 12, 17, 19, 24, 26, 27, 28, 30, 33, 46, 49, 51],
-            'test': [4, 5, 9, 11, 14, 20, 21, 25, 29, 34, 35, 37, 43, 44, 45, 47]
-        }
-        self.labels = {
-            'l-pass': 0, 'r-pass': 1, 'l-spike': 2, 'r_spike': 3,
-            'l_set': 4, 'r_set': 5, 'l_winpoint': 6, 'r_winpoint': 7
-        }
-        self.frames_labels = []
+    val_dataset = VolleyballDataset(pkl_path,
+                                    videos_path,
+                                    split="val",
+                                    mode=mode,
+                                    frame_transform=frame_transform,
+                                    crop_transform=crop_transform)
+    test_dataset = VolleyballDataset(pkl_path,
+                                     videos_path,
+                                     split="test",
+                                     mode=mode,
+                                     frame_transform=frame_transform,
+                                     crop_transform=crop_transform)
 
-        for folder in self.splits[self.split]:
-            annot_path = os.path.join(self.videos_path, f'{folder}', 'annotations.txt')
-            frame_dic = load_video_annot(annot_path)
+    train_loader = DataLoader(dataset=train_dataset,
+                              shuffle=True,
+                              batch_size=batch_size,
+                              num_workers=num_workers,
+                              pin_memory=True)
 
-            for frame, category in frame_dic.items():
-                frame_path = os.path.join(self.videos_path, f'{folder}', frame, f'{frame}.jpg')
-                if os.path.exists(frame_path):
-                    self.frames_labels.append((frame_path, self.labels[category]))
+    val_loader = DataLoader(dataset=val_dataset,
+                            shuffle=False,
+                            batch_size=batch_size,
+                            num_workers=num_workers,
+                            pin_memory=True)
 
-    def __len__(self):
-        return len(self.frames_labels)
+    test_loader = DataLoader(dataset=test_dataset,
+                             shuffle=False,
+                             batch_size=batch_size,
+                             num_workers=num_workers,
+                             pin_memory=True)
 
-    def __getitem__(self, idx):
-        frame_path, label = self.frames_labels[idx]
-        image = read_image(frame_path, mode=ImageReadMode.RGB)
-        if self.transform:
-            image = self.transform(image)
-        return image, label
+    return train_loader, val_loader, test_loader
