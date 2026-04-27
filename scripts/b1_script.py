@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from jedi.inference.compiled.subprocess import __main__
 from torch.optim import AdamW
 
 from data import get_data_loader
@@ -9,8 +8,9 @@ from models import B1Model
 from utils import train, full_evaluation
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pkl_path = ""
-videos_path = ""
+pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
+videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
+save = "/kaggle/working/"
 mode = "frame"
 batch_size = 64
 num_workers = 4
@@ -36,7 +36,7 @@ model = B1Model(num_classes=8)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
 
-if __main__ == "__main__":
+if __name__ == "__main__":
     model, history = train(
         model,
         train_loader,
