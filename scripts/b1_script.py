@@ -33,6 +33,7 @@ train_loader, val_loader, test_loader = get_data_loader(
 
 # ── Model / Loss / Optimizer ─────────────────────────────────────────────
 model = B1Model(num_classes=8)
+model = model.to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
 
@@ -46,10 +47,10 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         30,
-        "checkpoints", )
+        save, )
 
     full_evaluation(model, test_loader,
                     criterion,
                     device=device,
                     class_names=CLASS_NAMES,
-                    cm_save_path="volleyball_project/saves/b1")
+                    cm_save_path=save)
