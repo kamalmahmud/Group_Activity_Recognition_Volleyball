@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from PIL import Image
 from torch.utils.data import Dataset
-
+from .boxinfo import BoxInfo
 
 class VolleyballDataset(Dataset):
     def __init__(
