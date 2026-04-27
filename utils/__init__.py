@@ -1,2 +1,2 @@
-from trainer import train
-from evaluator import full_evaluation
+from .trainer import train
+from .evaluator import full_evaluation

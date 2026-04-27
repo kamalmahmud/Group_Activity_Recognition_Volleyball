@@ -1,3 +1,3 @@
-from volleyball_annot_loader import load_video_annot,load_tracking_annot
-from data_loader import get_data_loader
-from transformers import get_transform
+from .volleyball_annot_loader import load_video_annot, load_tracking_annot
+from .data_loader import get_data_loader
+from .transformers import get_transform

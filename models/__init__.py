@@ -1,1 +1,1 @@
-from b1_model import B1Model
+from .b1_model import B1Model
