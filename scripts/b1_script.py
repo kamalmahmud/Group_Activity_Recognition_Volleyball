@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
+from jedi.inference.compiled.subprocess import __main__
 from torch.optim import AdamW
-from models import B1Model
+
 from data import get_data_loader
 from data import get_transform
+from models import B1Model
 from utils import train, full_evaluation
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -33,19 +35,21 @@ train_loader, val_loader, test_loader = get_data_loader(
 model = B1Model(num_classes=8)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
-model, history = train(
-    model,
-    train_loader,
-    val_loader,
-    test_loader,
-    criterion,
-    optimizer,
-    CLASS_NAMES,
-    30,
-    "checkpoints", )
 
-full_evaluation(model, test_loader,
-                criterion,
-                device=device,
-                class_names=CLASS_NAMES,
-                cm_save_path="volleyball_project/saves/b1")
+if __main__ == "__main__":
+    model, history = train(
+        model,
+        train_loader,
+        val_loader,
+        test_loader,
+        criterion,
+        optimizer,
+        CLASS_NAMES,
+        30,
+        "checkpoints", )
+
+    full_evaluation(model, test_loader,
+                    criterion,
+                    device=device,
+                    class_names=CLASS_NAMES,
+                    cm_save_path="volleyball_project/saves/b1")
