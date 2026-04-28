@@ -96,15 +96,15 @@ class VolleyballDataset(Dataset):
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
             frame_id = int(clip_id)
             # the targeted frame and 2 frames after it
-            # for i in range(0, 3):
-            path = self._img_path(video_id, clip_id, frame_id)
-            boxes = self._boxes_for_frame(clip_dict, frame_id)
-            for box_info in boxes:
-                    samples.append({
-                        "path": path,
-                        "bbox": tuple(int(v) for v in box_info.box),
-                        "target": self.player_labels[box_info.category],
-                    })
+            for i in range(0, 2):
+                path = self._img_path(video_id, clip_id, frame_id+i)
+                boxes = self._boxes_for_frame(clip_dict, frame_id+i)
+                for box_info in boxes:
+                        samples.append({
+                            "path": path,
+                            "bbox": tuple(int(v) for v in box_info.box),
+                            "target": self.player_labels[box_info.category],
+                        })
 
         return samples
 
