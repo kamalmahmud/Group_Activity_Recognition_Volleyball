@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from PIL import Image
 from torch.utils.data import Dataset
-from .boxinfo import BoxInfo
+
 
 class VolleyballDataset(Dataset):
     def __init__(
@@ -32,8 +32,8 @@ class VolleyballDataset(Dataset):
         self.include_generated = include_generated
         self.splits = {
             'train': ["1", "3", "6", "7", "10", "13", "15", "16", "18", "22", "23", "31",
-                      "32", "36", "38", "39", "40", "41", "42", "48", "50", "52", "53", "54",
-            "0", "2", "8", "12", "17", "19", "24", "26", "27", "28", "30", "33", "46", "49", "51"],
+                      "32", "36", "38", "39", "40", "41", "42", "48", "50", "52", "53", "54", ],
+            'val': ["0", "2", "8", "12", "17", "19", "24", "26", "27", "28", "30", "33", "46", "49", "51"],
             'test': ['4', '5', '9', '11', '14', '20', '21', '25', '29', '34', '35', '37', '43', '44', '45', '47']
         }
         self.labels = {
@@ -53,27 +53,36 @@ class VolleyballDataset(Dataset):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        sample = self.samples[idx]
-        return self._get_frame(sample)
-
-    def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        item = self.samples[idx]
         if self.mode == "frame":
-            return self._build_frame_index(video_ids)
+            return self._get_frame(item)
+        if self.mode == "person":
+            return self._get_person(item)
+        raise RuntimeError(f"Unhandled mode={self.mode!r}")
 
-    def _iter_clips(self, video_ids: Sequence[str]) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
-        for video_id in video_ids:
-            if video_id not in self.annotations:
-                continue
-
-            clip_ids = sorted(self.annotations[video_id].keys(), key=self._numeric_sort_key)
-            for clip_id in clip_ids:
-                yield video_id, clip_id, self.annotations[video_id][clip_id]
-
+    # __getitem__ Methods-------------------------------------------------------------------------------
     def _get_frame(self, item):
-
         image = self._load_frame_image(item["path"])
         label = self.labels[item["group_label_name"]]
         return image, label
+
+    def _get_person(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        image = Image.open(item["path"]).convert("RGB")
+        crop = image.crop(item["bbox"])
+        crop = self._apply_crop_transform(crop)
+        return {
+            "image": crop,
+            "target": item["target"],
+        }
+
+    # Index building Methods------------------------------------------------------
+    def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        if self.mode == "frame":
+            return self._build_frame_index(video_ids)
+        elif self.mode == "person":
+            return self._build_person_index(video_ids)
+        else:
+            raise ValueError(f"Unknown mode={self.mode!r}.")
 
     def _build_frame_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
         samples = []
@@ -83,7 +92,31 @@ class VolleyballDataset(Dataset):
             samples.append(self._base_item(video_id, clip_id, key_frame_id, clip_dict, boxes))
         return samples
 
-    # Helper Methods
+    def _build_person_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        samples = []
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            frame_id = int(clip_id)
+            path = self._img_path(video_id, clip_id, frame_id)
+            boxes = self._boxes_for_frame(clip_dict, frame_id)
+            for box_info in boxes:
+                samples.append({
+                    "path": path,
+                    "bbox": tuple(int(v) for v in box_info.box),
+                    "target": self.player_labels[box_info.category],
+                })
+
+        return samples
+
+    # Helper Methods-----------------------------------------------------------
+    def _iter_clips(self, video_ids: Sequence[str]) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
+        for video_id in video_ids:
+            if video_id not in self.annotations:
+                continue
+
+            clip_ids = sorted(self.annotations[video_id].keys(), key=self._numeric_sort_key)
+            for clip_id in clip_ids:
+                yield video_id, clip_id, self.annotations[video_id][clip_id]
+
     def _img_path(self, video_id, clip_id, frame_id):
         path = os.path.join(self.videos_path, video_id, clip_id, str(frame_id) + ".jpg")
         return path

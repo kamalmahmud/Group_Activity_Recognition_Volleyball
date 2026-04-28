@@ -79,3 +79,4 @@ ehthumbs.db
 .env.*.local
 secrets.json
 congigs/
+*.pth

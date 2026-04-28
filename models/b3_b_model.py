@@ -1,7 +1,7 @@
 from torch import nn
 
 
-class B3Model(nn.Module):
+class B3BModel(nn.Module):
     def __init__(self, num_classes=8):
         super().__init__()
         self.classifier = nn.Sequential(
