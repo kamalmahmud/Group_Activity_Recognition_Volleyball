@@ -30,12 +30,7 @@ def evaluate(model, loader, criterion, device, class_names, print_report=True):
     all_preds, all_labels = [], []
 
     with torch.no_grad():
-        for batch in tqdm(loader, desc="Evaluating", leave=False):
-            if len(batch) == 3:
-                frames, _, labels = batch
-            else:
-                frames, labels = batch
-
+        for frames, labels in tqdm(loader, desc="Evaluating", leave=False):
             frames = frames.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
