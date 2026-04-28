@@ -1,19 +1,22 @@
 from torch.utils.data import DataLoader
 from .dataset import VolleyballDataset
 
+
 def get_data_loader(pkl_path,
                     videos_path,
                     mode: str,
                     frame_transform,
+                    crop_transform,
                     batch_size: int,
                     num_workers: int,
-                    crop_transform ):
-
+                    ):
     train_dataset = VolleyballDataset(pkl_path,
                                       videos_path,
                                       split="train",
                                       mode=mode,
-                                      frame_transform=frame_transform, )
+                                      frame_transform=frame_transform,
+                                      crop_transform=crop_transform
+                                      )
 
     val_dataset = VolleyballDataset(pkl_path,
                                     videos_path,
