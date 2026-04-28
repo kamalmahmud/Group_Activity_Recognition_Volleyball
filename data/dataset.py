@@ -70,12 +70,11 @@ class VolleyballDataset(Dataset):
         image = Image.open(item["path"]).convert("RGB")
         crop = image.crop(item["bbox"])
         crop = self._apply_crop_transform(crop)
-        return {
-            "image": crop,
-            "target": item["target"],
-        }
+        label = item["target"]
+        return crop, label
 
-    # Index building Methods------------------------------------------------------
+        # Index building Methods------------------------------------------------------
+
     def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
         if self.mode == "frame":
             return self._build_frame_index(video_ids)
