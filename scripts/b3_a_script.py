@@ -11,8 +11,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
-batch_size = 128
-num_workers = 8
+batch_size = 64
+num_workers = 4
 lr = 1e-3
 
 CLASS_NAMES = [
