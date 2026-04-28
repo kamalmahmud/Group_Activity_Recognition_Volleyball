@@ -52,7 +52,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        15,
+        30,
         save, )
 
     full_evaluation(
