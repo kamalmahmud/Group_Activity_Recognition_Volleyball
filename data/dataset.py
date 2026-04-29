@@ -100,7 +100,7 @@ class VolleyballDataset(Dataset):
                 path = self._img_path(video_id, clip_id, frame_id + i)
                 boxes = self._boxes_for_frame(clip_dict, frame_id + i)
                 for box_info in boxes:
-                    if self.player_labels[box_info.category] in [7,0,5] and i != 0:
+                    if self.player_labels[box_info.category] in 7 and i != 0:
                         continue
                     samples.append({
                         "path": path,

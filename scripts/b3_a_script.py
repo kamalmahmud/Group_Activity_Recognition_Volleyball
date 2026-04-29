@@ -49,9 +49,9 @@ print("Checkpoint epoch:", checkpoint.get("epoch"))
 print("Val acc:", checkpoint.get("val_acc"))
 print("Val loss:", checkpoint.get("val_loss"))
 print("Model device:", next(model.parameters()).device)
-# Freeze all ResNet layers except final classifier
+# Unfreeze only layer4 and fc
 for name, param in model.model.named_parameters():
-    if name.startswith("fc"):
+    if name.startswith("layer4") or name.startswith("fc"):
         param.requires_grad = True
     else:
         param.requires_grad = False
@@ -62,9 +62,12 @@ for name, param in model.named_parameters():
         print("Trainable:", name)
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+
 optimizer = AdamW(
-    filter(lambda p: p.requires_grad, model.parameters()),
-    lr=lr,
+    [
+        {"params": model.model.layer4.parameters(), "lr": 1e-5},
+        {"params": model.model.fc.parameters(), "lr": 5e-5},
+    ],
     weight_decay=1e-4
 )
 
@@ -77,8 +80,18 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        3,
+        5,
         save, )
+    best_stage2_path = "/kaggle/working/best_model.pth"
+
+    best_checkpoint = torch.load(best_stage2_path, map_location=device)
+    model.load_state_dict(best_checkpoint["model_state_dict"])
+    model.to(device)
+    
+    print("Loaded best Stage 2 checkpoint")
+    print("Best epoch:", best_checkpoint.get("epoch"))
+    print("Best val acc:", best_checkpoint.get("val_acc"))
+    print("Best val loss:", best_checkpoint.get("val_loss"))
 
     full_evaluation(
         model,
