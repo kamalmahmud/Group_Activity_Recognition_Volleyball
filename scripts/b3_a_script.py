@@ -14,7 +14,7 @@ videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volley
 save = "/kaggle/working/"
 batch_size = 64
 num_workers = 4
-lr = 1e-3
+lr = 1e-4
 
 CLASS_NAMES = [
     "blocking",
@@ -40,15 +40,13 @@ train_loader, val_loader, test_loader = get_data_loader(
 )
 
 # ── Model / Loss / Optimizer ─────────────────────────────────────────────
-model = B3AModel(num_classes=9)
-criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=lr)
+model = B3AModel(num_classes=9).to(device)
 checkpoint = torch.load(checkpoint_path, map_location=device)
-
 model.load_state_dict(checkpoint["model_state_dict"])
-optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+model = model.to(device)
 
-start_epoch = checkpoint["epoch"] + 1
+criterion = nn.CrossEntropyLoss()
+optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
 if __name__ == "__main__":
     model, history = train(
