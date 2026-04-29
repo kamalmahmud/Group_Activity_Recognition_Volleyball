@@ -44,6 +44,11 @@ model = B3AModel(num_classes=9).to(device)
 checkpoint = torch.load(checkpoint_path, map_location=device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model = model.to(device)
+print("Loaded checkpoint successfully")
+print("Checkpoint epoch:", checkpoint.get("epoch"))
+print("Val acc:", checkpoint.get("val_acc"))
+print("Val loss:", checkpoint.get("val_loss"))
+print("Model device:", next(model.parameters()).device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -57,7 +62,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        25,
+        15,
         save, )
 
     full_evaluation(
