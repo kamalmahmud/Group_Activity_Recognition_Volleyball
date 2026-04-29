@@ -8,7 +8,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/default/1"
+checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/default/1/best_model4.pth"
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
