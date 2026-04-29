@@ -49,9 +49,24 @@ print("Checkpoint epoch:", checkpoint.get("epoch"))
 print("Val acc:", checkpoint.get("val_acc"))
 print("Val loss:", checkpoint.get("val_loss"))
 print("Model device:", next(model.parameters()).device)
+# Freeze all ResNet layers except final classifier
+for name, param in model.model.named_parameters():
+    if name.startswith("fc"):
+        param.requires_grad = True
+    else:
+        param.requires_grad = False
 
-criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+# Check trainable layers
+for name, param in model.named_parameters():
+    if param.requires_grad:
+        print("Trainable:", name)
+
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+optimizer = AdamW(
+    filter(lambda p: p.requires_grad, model.parameters()),
+    lr=lr,
+    weight_decay=1e-4
+)
 
 if __name__ == "__main__":
     model, history = train(
@@ -62,7 +77,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        15,
+        3,
         save, )
 
     full_evaluation(
