@@ -12,7 +12,7 @@ checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
-batch_size = 64
+batch_size = 32
 num_workers = 4
 lr = 1e-4
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     best_checkpoint = torch.load(best_stage2_path, map_location=device)
     model.load_state_dict(best_checkpoint["model_state_dict"])
     model.to(device)
-    
+
     print("Loaded best Stage 2 checkpoint")
     print("Best epoch:", best_checkpoint.get("epoch"))
     print("Best val acc:", best_checkpoint.get("val_acc"))
