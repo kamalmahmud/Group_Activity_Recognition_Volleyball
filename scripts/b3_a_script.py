@@ -8,7 +8,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/2/1/best_model5.pth"
+checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/2/2/best_model.pth"
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
@@ -65,8 +65,8 @@ criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 optimizer = AdamW(
     [
-        {"params": model.model.layer4.parameters(), "lr": 1e-5},
-        {"params": model.model.fc.parameters(), "lr": 5e-5},
+        {"params": model.model.layer4.parameters(), "lr": 5e-6},
+        {"params": model.model.fc.parameters(), "lr": 2e-5},
     ],
     weight_decay=1e-4
 )
