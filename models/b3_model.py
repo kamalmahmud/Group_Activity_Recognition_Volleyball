@@ -8,7 +8,7 @@ class B3AModel(nn.Module):
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         in_features = self.model.fc.in_features
         self.model.fc = nn.Sequential(
-            nn.Dropout(p=0.3),
+            nn.Dropout(p=0.2),
             nn.Linear(in_features, num_classes)
         )
 

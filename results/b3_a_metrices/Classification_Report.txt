@@ -15,3 +15,41 @@ Classification Report
     accuracy                           0.76     31868
    macro avg       0.60      0.57      0.58     31868
 weighted avg       0.77      0.76      0.76     31868
+
+
+Classification Report
+────────────────────────────────────────────────────────────
+                precision    recall  f1-score   support
+
+    blocking       0.90      0.90      0.90      5985
+     digging       0.49      0.43      0.46      4613
+     falling       0.79      0.77      0.78      2639
+     jumping       0.14      0.14      0.14       616
+      moving       0.70      0.76      0.73      9464
+     setting       0.76      0.79      0.78      2604
+     spiking       0.69      0.80      0.74      2604
+    standing       0.63      0.63      0.63     10819
+     waiting       0.68      0.62      0.65      7280
+
+    accuracy                           0.69     46624
+   macro avg       0.64      0.65      0.64     46624
+weighted avg       0.69      0.69      0.69     46624
+
+
+Classification Report
+────────────────────────────────────────────────────────────
+              precision    recall  f1-score   support
+
+    blocking       0.91      0.86      0.88      3420
+     digging       0.57      0.27      0.36      2636
+     falling       0.89      0.64      0.75      1508
+     jumping       0.25      0.03      0.06       352
+      moving       0.72      0.64      0.68      5408
+     setting       0.75      0.80      0.77      1488
+     spiking       0.74      0.68      0.71      1488
+    standing       0.63      0.86      0.73     10819
+     waiting       0.67      0.48      0.56      4160
+
+    accuracy                           0.69     31279
+   macro avg       0.68      0.59      0.61     31279
+weighted avg       0.69      0.69      0.68     31279

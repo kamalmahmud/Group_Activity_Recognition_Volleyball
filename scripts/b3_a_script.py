@@ -8,6 +8,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/default/1"
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
@@ -42,6 +43,12 @@ train_loader, val_loader, test_loader = get_data_loader(
 model = B3AModel(num_classes=9)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
+checkpoint = torch.load(checkpoint_path, map_location=device)
+
+model.load_state_dict(checkpoint["model_state_dict"])
+optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+start_epoch = checkpoint["epoch"] + 1
 
 if __name__ == "__main__":
     model, history = train(

@@ -96,11 +96,11 @@ class VolleyballDataset(Dataset):
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
             frame_id = int(clip_id)
             # the targeted frame and 1 frames after it
-            for i in [-1, 0, 1, 2]:
+            for i in [-2, 3, 4, 5]:
                 path = self._img_path(video_id, clip_id, frame_id + i)
                 boxes = self._boxes_for_frame(clip_dict, frame_id + i)
                 for box_info in boxes:
-                    if self.player_labels[box_info.category] == 7 and i != 0:
+                    if self.player_labels[box_info.category] in [7,0,5] and i != 3:
                         continue
                     samples.append({
                         "path": path,
