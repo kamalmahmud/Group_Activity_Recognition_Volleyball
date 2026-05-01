@@ -80,16 +80,21 @@ class VolleyballDataset(Dataset):
         crops = []
         for bbox in item["boxes"]:
             crop = image.crop(bbox)
-            crop = self._apply_crop_transform(crop)
             crops.append(crop)
+
+        crops = self._sort_boxes(crops)
+
+        for crop in crops:
+            crop = self._apply_crop_transform(crop)
 
         # If more than 12 persons/crops, keep first 12
         if len(crops) > 12:
             crops = crops[:12]
 
-        # If fewer than 12, repeat last crop until 12
+        # If fewer than 12, add zero crop until 12
         while len(crops) < 12:
-            crops.append(crops[-1].clone())
+            zero_crop = torch.zeros_like(crops[0])
+            crops.append(zero_crop)
 
         crops = torch.stack(crops, dim=0)
         label = torch.tensor(item["target"], dtype=torch.long)
@@ -191,8 +196,8 @@ class VolleyballDataset(Dataset):
         return filtered
 
     def _sort_boxes(self, boxes: Sequence[Any]) -> List[Any]:
-        if self.player_order == "player_id":
-            return sorted(boxes, key=lambda b: (int(getattr(b, "player_ID", -1)), int(getattr(b, "frame_ID", -1))))
+        # if self.player_order == "player_id":
+        #     return sorted(boxes, key=lambda b: (int(getattr(b, "player_ID", -1)), int(getattr(b, "frame_ID", -1))))
 
         # Spatial order: left-to-right, then top-to-bottom, then player_ID.
         return sorted(
