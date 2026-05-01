@@ -83,8 +83,16 @@ class VolleyballDataset(Dataset):
             crop = self._apply_crop_transform(crop)
             crops.append(crop)
 
-        crops = torch.stack(crops)
-        label = item["target"]
+        # If more than 12 persons/crops, keep first 12
+        if len(crops) > 12:
+            crops = crops[:12]
+
+        # If fewer than 12, repeat last crop until 12
+        while len(crops) < 12:
+            crops.append(crops[-1].clone())
+
+        crops = torch.stack(crops, dim=0)
+        label = torch.tensor(item["target"], dtype=torch.long)
         return crops, label
 
         # Index building Methods------------------------------------------------------
