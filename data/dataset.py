@@ -2,7 +2,7 @@ import os
 import os.path
 import pickle
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
-
+import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
@@ -58,6 +58,8 @@ class VolleyballDataset(Dataset):
             return self._get_frame(item)
         if self.mode == "person":
             return self._get_person(item)
+        if self.mode == "frame_person":
+            return self._get_frame_person(item)
         raise RuntimeError(f"Unhandled mode={self.mode!r}")
 
     # __getitem__ Methods-------------------------------------------------------------------------------
@@ -73,6 +75,18 @@ class VolleyballDataset(Dataset):
         label = item["target"]
         return crop, label
 
+    def _get_frame_person(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        image = Image.open(item["path"]).convert("RGB")
+        crops = []
+        for bbox in item["boxes"]:
+            crop = image.crop(bbox)
+            crop = self._apply_crop_transform(crop)
+            crops.append(crop)
+
+        crops = torch.stack(crops)
+        label = item["target"]
+        return crops, label
+
         # Index building Methods------------------------------------------------------
 
     def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
@@ -80,6 +94,8 @@ class VolleyballDataset(Dataset):
             return self._build_frame_index(video_ids)
         elif self.mode == "person":
             return self._build_person_index(video_ids)
+        elif self.mode == "frame_person":
+            return self._build_frame_person_index(video_ids)
         else:
             raise ValueError(f"Unknown mode={self.mode!r}.")
 
@@ -110,7 +126,19 @@ class VolleyballDataset(Dataset):
 
         return samples
 
+    def _build_frame_person_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        samples = []
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            frame_id = int(clip_id)
+            boxes = self._boxes_for_frame(clip_dict, frame_id)
+            samples.append({
+                "path": self._img_path(video_id, clip_id, frame_id),
+                "boxes": [tuple(int(v) for v in b.box) for b in boxes],
+                "target": self.labels[clip_dict["category"]],
+            })
+        return samples
     # Helper Methods-----------------------------------------------------------
+
     def _iter_clips(self, video_ids: Sequence[str]) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
         for video_id in video_ids:
             if video_id not in self.annotations:
