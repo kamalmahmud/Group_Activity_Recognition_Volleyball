@@ -10,11 +10,12 @@ class B3BModel(nn.Module):
         old_model = B3AModel(num_classes=9)
         checkpoint = torch.load(ckpt_path, map_location="cpu")
         old_model.load_state_dict(checkpoint["model_state_dict"])
-        # Remove the 9-class classifier and keep 2048 features
-        self.feature_extractor.fc = nn.Identity()
 
         # Use ResNet50 as feature extractor
         self.feature_extractor = old_model.model
+        # Remove the 9-class classifier and keep 2048 features
+        self.feature_extractor.fc = nn.Identity()
+        # freeze resnet50
         for param in self.feature_extractor.parameters():
             param.requires_grad = False
 
