@@ -84,11 +84,12 @@ class VolleyballDataset(Dataset):
 
         crops = self._sort_boxes(crops)
 
-        crops = []
+        transformed_crops = []
         for crop in crops:
             crop = self._apply_crop_transform(crop)
-            crops.append(crop)
+            transformed_crops.append(crop)
 
+        crops = transformed_crops
         # If more than 12 persons/crops, keep first 12
         if len(crops) > 12:
             crops = crops[:12]
