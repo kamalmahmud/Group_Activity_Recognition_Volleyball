@@ -2,6 +2,7 @@ import os
 import os.path
 import pickle
 from typing import Any, Dict, Iterable, List, Sequence, Tuple
+
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
@@ -75,35 +76,64 @@ class VolleyballDataset(Dataset):
         label = item["target"]
         return crop, label
 
-    def _get_frame_person(self, item: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_frame_person(self, item: Dict[str, Any]):
         image = Image.open(item["path"]).convert("RGB")
-        crops = []
-        for bbox in item["boxes"]:
+
+        W, H = image.size
+        boxes = item["boxes"]
+
+        left_boxes = []
+        right_boxes = []
+
+        for bbox in boxes:
+            x1, y1, x2, y2 = bbox
+            center_x = (x1 + x2) / 2
+
+            if center_x < W / 2:
+                left_boxes.append(bbox)
+            else:
+                right_boxes.append(bbox)
+
+        # keep max 6 persons per side
+        left_boxes = left_boxes[:6]
+        right_boxes = right_boxes[:6]
+
+        left_crops = []
+        right_crops = []
+
+        for bbox in left_boxes:
             crop = image.crop(bbox)
-            crops.append(crop)
-
-        crops = self._sort_boxes(crops)
-
-        transformed_crops = []
-        for crop in crops:
             crop = self._apply_crop_transform(crop)
-            transformed_crops.append(crop)
+            left_crops.append(crop)
 
-        crops = transformed_crops
-        # If more than 12 persons/crops, keep first 12
-        if len(crops) > 12:
-            crops = crops[:12]
+        for bbox in right_boxes:
+            crop = image.crop(bbox)
+            crop = self._apply_crop_transform(crop)
+            right_crops.append(crop)
 
-        # If fewer than 12, add zero crop until 12
-        while len(crops) < 12:
-            zero_crop = torch.zeros_like(crops[0])
-            crops.append(zero_crop)
+        # zero padding
+        if len(left_crops) > 0:
+            zero_crop = torch.zeros_like(left_crops[0])
+        elif len(right_crops) > 0:
+            zero_crop = torch.zeros_like(right_crops[0])
+        else:
+            zero_crop = torch.zeros(3, 224, 224)
 
+        while len(left_crops) < 6:
+            left_crops.append(zero_crop.clone())
+
+        while len(right_crops) < 6:
+            right_crops.append(zero_crop.clone())
+
+        crops = left_crops + right_crops
         crops = torch.stack(crops, dim=0)
-        label = torch.tensor(item["target"], dtype=torch.long)
-        return crops, label
+        # shape: [12, C, H, W]
+        # first 6 = left side
+        # last 6  = right side
 
-        # Index building Methods------------------------------------------------------
+        label = torch.tensor(item["target"], dtype=torch.long)
+
+        return crops, label
 
     def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
         if self.mode == "frame":
@@ -153,6 +183,7 @@ class VolleyballDataset(Dataset):
                 "target": self.labels[clip_dict["category"]],
             })
         return samples
+
     # Helper Methods-----------------------------------------------------------
 
     def _iter_clips(self, video_ids: Sequence[str]) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
@@ -199,8 +230,8 @@ class VolleyballDataset(Dataset):
         return filtered
 
     def _sort_boxes(self, boxes: Sequence[Any]) -> List[Any]:
-        # if self.player_order == "player_id":
-        #     return sorted(boxes, key=lambda b: (int(getattr(b, "player_ID", -1)), int(getattr(b, "frame_ID", -1))))
+        if self.player_order == "player_id":
+            return sorted(boxes, key=lambda b: (int(getattr(b, "player_ID", -1)), int(getattr(b, "frame_ID", -1))))
 
         # Spatial order: left-to-right, then top-to-bottom, then player_ID.
         return sorted(

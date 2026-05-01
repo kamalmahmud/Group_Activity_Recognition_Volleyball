@@ -47,7 +47,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        30,
+        40,
         save, )
 
     best_stage2_path = "/kaggle/working/best_model.pth"

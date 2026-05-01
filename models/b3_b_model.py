@@ -1,5 +1,5 @@
 import torch
-from torch import nn
+import torch.nn as nn
 
 from models.b3_model import B3AModel
 
@@ -11,33 +11,74 @@ class B3BModel(nn.Module):
         checkpoint = torch.load(ckpt_path, map_location="cpu")
         old_model.load_state_dict(checkpoint["model_state_dict"])
 
-        # Use ResNet50 as feature extractor
         self.feature_extractor = old_model.model
-        # Remove the 9-class classifier and keep 2048 features
+
+        # remove Dropout + Linear(2048 -> 9)
         self.feature_extractor.fc = nn.Identity()
-        # freeze resnet50
+        # freeze ResNet50
         for param in self.feature_extractor.parameters():
             param.requires_grad = False
 
-        self.classifier = nn.Linear(2048, num_classes)
+        self.classifier = nn.Sequential(
+            nn.Linear(4096, 1024),
+            nn.ReLU(),
+            nn.Dropout(p=0.3),
+            nn.Linear(1024, num_classes)
+        )
 
     def forward(self, x):
-        # x: [batch_size, 12, C, H, W]
+        # x shape: [batch_size, 12, C, H, W]
 
-        batch_size, num_images, C, H, W = x.shape
+        B, N, C, H, W = x.shape
 
-        x = x.view(batch_size * num_images, C, H, W)
+        # detect zero-padded crops
+        valid_mask = x.flatten(2).abs().sum(dim=2) > 0
+        # shape: [B, 12]
 
-        features = self.feature_extractor(x)
-        # features: [batch_size * 12, 2048]
+        x = x.reshape(B * N, C, H, W)
 
-        features = features.view(batch_size, num_images, 2048)
-        # features: [batch_size, 12, 2048]
+        with torch.no_grad():
+            features = self.feature_extractor(x)
+            # shape: [B * 12, 2048]
 
-        pooled_features, _ = torch.max(features, dim=1)
-        # pooled_features: [batch_size, 2048]
+        features = features.reshape(B, N, 2048)
+        # shape: [B, 12, 2048]
 
-        output = self.classifier(pooled_features)
-        # output: [batch_size, 8]
+        valid_mask = valid_mask.unsqueeze(-1)
+        # shape: [B, 12, 1]
+
+        # ignore padded crops during max pooling
+        features = features.masked_fill(~valid_mask, -1e9)
+
+        left_features = features[:, :6, :]
+        right_features = features[:, 6:, :]
+
+        left_valid = valid_mask[:, :6, :]
+        right_valid = valid_mask[:, 6:, :]
+
+        left_pooled = torch.max(left_features, dim=1).values
+        right_pooled = torch.max(right_features, dim=1).values
+
+        # if a side has no valid persons, replace -1e9 with zeros
+        left_any = left_valid.any(dim=1)
+        right_any = right_valid.any(dim=1)
+
+        left_pooled = torch.where(
+            left_any,
+            left_pooled,
+            torch.zeros_like(left_pooled)
+        )
+
+        right_pooled = torch.where(
+            right_any,
+            right_pooled,
+            torch.zeros_like(right_pooled)
+        )
+
+        pooled = torch.cat([left_pooled, right_pooled], dim=1)
+        # shape: [B, 4096]
+
+        output = self.classifier(pooled)
+        # shape: [B, 8]
 
         return output
