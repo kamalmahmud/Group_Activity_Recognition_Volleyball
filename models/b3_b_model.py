@@ -48,7 +48,8 @@ class B3BModel(nn.Module):
         # shape: [B, 12, 1]
 
         # ignore padded crops during max pooling
-        features = features.masked_fill(~valid_mask, -1e9)
+        mask_value = torch.finfo(features.dtype).min
+        features = features.masked_fill(~valid_mask, mask_value)
 
         left_features = features[:, :6, :]
         right_features = features[:, 6:, :]
