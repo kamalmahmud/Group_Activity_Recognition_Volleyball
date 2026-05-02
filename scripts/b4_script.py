@@ -13,8 +13,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
-
-batch_size = 16
+lr = 0.0001
+batch_size = 8
 num_workers = 4
 CLASS_NAMES = [
     "l-pass", "r-pass", "l-spike", "r-spike",
@@ -36,11 +36,7 @@ model = B4Model(num_classes=len(CLASS_NAMES))
 model = model.to(device)
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
-optimizer = AdamW([
-    {"params": model.feature_extractor.parameters(), "lr": 5e-6},
-    {"params": model.temp.parameters(), "lr": 5e-5},
-    {"params": model.fc.parameters(), "lr": 5e-5},
-], weight_decay=1e-4)
+optimizer = AdamW(model.parameters(),lr=lr, weight_decay=1e-4)
 
 if __name__ == "__main__":
     model, history = train(
