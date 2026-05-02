@@ -61,6 +61,8 @@ class VolleyballDataset(Dataset):
             return self._get_person(item)
         if self.mode == "frame_person":
             return self._get_frame_person(item)
+        if self.mode == "temporal_frame":
+            return self._get_temporal_frame(item)
         raise RuntimeError(f"Unhandled mode={self.mode!r}")
 
     # __getitem__ Methods-------------------------------------------------------------------------------
@@ -135,6 +137,17 @@ class VolleyballDataset(Dataset):
 
         return crops, label
 
+    def _get_temporal_frame(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        frames = []
+        for frame_id in item["frame_ids"]:
+            path = self._img_path(item["video_id"], item["clip_id"], frame_id)
+            frames.append(self._load_frame_image(path))
+
+        frames = torch.stack(frames, dim=0)
+        target = torch.tensor(item["target"], dtype=torch.long)
+        return frames, target
+
+    # Index building--------------------------------------------------------------------------
     def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
         if self.mode == "frame":
             return self._build_frame_index(video_ids)
@@ -142,6 +155,8 @@ class VolleyballDataset(Dataset):
             return self._build_person_index(video_ids)
         elif self.mode == "frame_person":
             return self._build_frame_person_index(video_ids)
+        elif self.mode == "temporal_frame":
+            return self._build_temporal_clip_index(video_ids)
         else:
             raise ValueError(f"Unknown mode={self.mode!r}.")
 
@@ -184,6 +199,18 @@ class VolleyballDataset(Dataset):
             })
         return samples
 
+    def _build_temporal_clip_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        samples = []
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            samples.append({
+                "video_id": video_id,
+                "clip_id": clip_id,
+                "frame_ids": self._sorted_frame_ids(clip_dict),
+                "target": self.labels[clip_dict["category"]],
+                "clip_dict": clip_dict,
+            })
+        return samples
+
     # Helper Methods-----------------------------------------------------------
 
     def _iter_clips(self, video_ids: Sequence[str]) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
@@ -212,6 +239,9 @@ class VolleyballDataset(Dataset):
             "group_label_name": group_label_name,
             "boxes": [self._box_to_dict(b) for b in boxes],
         }
+
+    def _sorted_frame_ids(self, clip_dict: Dict[str, Any]) -> List[int]:
+        return sorted(int(frame_id) for frame_id in clip_dict["frame_boxes_dct"].keys())
 
     def _boxes_for_frame(self, clip_dict: Dict[str, Any], frame_id: int) -> List[Any]:
         frame_boxes_dct = clip_dict["frame_boxes_dct"]

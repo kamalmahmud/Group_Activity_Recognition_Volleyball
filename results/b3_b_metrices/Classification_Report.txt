@@ -35,6 +35,7 @@ Classification Report
 weighted avg       0.76      0.76      0.76      1337
 
 3. Sorting the cropped images and with zero padding
+results
 Classification Report
 ────────────────────────────────────────────────────────────
               precision    recall  f1-score   support
