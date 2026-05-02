@@ -1,0 +1,16 @@
+Classification Report
+────────────────────────────────────────────────────────────
+              precision    recall  f1-score   support
+
+      l-pass       0.56      0.55      0.56       226
+      r-pass       0.49      0.68      0.57       210
+     l-spike       0.79      0.63      0.70       179
+     r-spike       0.68      0.56      0.62       173
+       l-set       0.63      0.70      0.66       168
+       r-set       0.67      0.61      0.64       192
+  l-winpoint       0.67      0.65      0.66       102
+  r-winpoint       0.58      0.55      0.56        87
+
+    accuracy                           0.62      1337
+   macro avg       0.63      0.62      0.62      1337
+weighted avg       0.63      0.62      0.62      1337

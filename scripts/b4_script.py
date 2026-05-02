@@ -34,12 +34,12 @@ train_loader, val_loader, test_loader = get_data_loader(
 
 model = B4Model(num_classes=len(CLASS_NAMES))
 model = model.to(device)
-criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 optimizer = AdamW([
-    {"params": model.feature_extractor.parameters(), "lr": 1e-5},
-    {"params": model.temp.parameters(), "lr": 1e-4},
-    {"params": model.fc.parameters(), "lr": 1e-4},
+    {"params": model.feature_extractor.parameters(), "lr": 5e-6},
+    {"params": model.temp.parameters(), "lr": 5e-5},
+    {"params": model.fc.parameters(), "lr": 5e-5},
 ], weight_decay=1e-4)
 
 if __name__ == "__main__":

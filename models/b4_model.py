@@ -23,6 +23,7 @@ class B4Model(nn.Module):
             nn.Dropout(0.3),
             nn.Linear(512, num_classes)
         )
+        self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
         # x: [B, T, C, H, W]
@@ -40,7 +41,8 @@ class B4Model(nn.Module):
         x, _ = self.temp(x)  # [B, T, hidden_size]
 
         # Use last frame representation
-        x = x[:, -1, :]  # [B, hidden_size]
+        x = x.mean(dim=1)  # [B, hidden_size]
+        x = self.dropout(x)
 
         x = self.fc(x)  # [B, num_classes]
         return x
