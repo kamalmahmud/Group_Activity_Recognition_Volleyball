@@ -14,7 +14,7 @@ pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleybal
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
 lr = 0.0001
-batch_size = 32
+batch_size = 16
 num_workers = 4
 CLASS_NAMES = [
     "l-pass", "r-pass", "l-spike", "r-spike",
