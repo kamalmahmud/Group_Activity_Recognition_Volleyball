@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models.b3_model import B3AModel
+from models.b3_a_model import B3AModel
 
 
 class B3BModel(nn.Module):

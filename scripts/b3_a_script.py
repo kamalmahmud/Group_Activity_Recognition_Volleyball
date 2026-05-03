@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.optim import AdamW
 from data.data_loader import get_data_loader
 from data.transformers import get_transform
-from models.b3_model import B3AModel
+from models.b3_a_model import B3AModel
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 
