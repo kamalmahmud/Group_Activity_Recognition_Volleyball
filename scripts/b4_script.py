@@ -10,6 +10,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+checkpoint_path = "/kaggle/input/models/kamalalqedra/baseline4/pytorch/default/1/best_model.pth"
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
@@ -36,7 +37,12 @@ model = B4Model(num_classes=len(CLASS_NAMES))
 model = model.to(device)
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
-optimizer = AdamW(model.parameters(),lr=lr, weight_decay=1e-4)
+optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+
+checkpoint = torch.load(checkpoint_path, map_location=device)
+
+model.load_state_dict(checkpoint["model_state_dict"])
+optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
 if __name__ == "__main__":
     model, history = train(
@@ -47,7 +53,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        25,
+        10,
         save, )
 
     best_stage2_path = "/kaggle/working/best_model.pth"
