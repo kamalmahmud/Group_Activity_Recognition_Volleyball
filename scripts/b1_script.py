@@ -14,7 +14,7 @@ videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volley
 save = "/kaggle/working/"
 batch_size = 64
 num_workers = 4
-lr = 1e-4
+lr = 1e-3
 CLASS_NAMES = [
     "l-pass", "r-pass", "l-spike", "r-spike",
     "l-set", "r-set", "l-winpoint", "r-winpoint"
