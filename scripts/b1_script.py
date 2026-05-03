@@ -12,9 +12,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
 videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
 save = "/kaggle/working/"
-batch_size = 128
+batch_size = 64
 num_workers = 4
-lr = 1e-3
+lr = 1e-4
 CLASS_NAMES = [
     "l-pass", "r-pass", "l-spike", "r-spike",
     "l-set", "r-set", "l-winpoint", "r-winpoint"
@@ -53,4 +53,4 @@ if __name__ == "__main__":
                     criterion,
                     device=device,
                     class_names=CLASS_NAMES,
-                    cm_save_path=save)
+                    cm_save_path="/kaggle/working/confusion_matrix.png")
