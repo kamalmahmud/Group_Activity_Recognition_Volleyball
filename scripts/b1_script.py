@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 
+from data import GROUP_LABELS
 from data.data_loader import get_data_loader
 from data.transformers import get_transform
 from models.b1_model import B1Model
@@ -15,10 +16,7 @@ save = "/kaggle/working/"
 batch_size = 64
 num_workers = 4
 lr = 1e-4
-CLASS_NAMES = [
-    "l-pass", "r-pass", "l-spike", "r-spike",
-    "l-set", "r-set", "l-winpoint", "r-winpoint"
-]
+CLASS_NAMES = GROUP_LABELS.keys()
 
 frame_transform, crop_transform = get_transform()
 train_loader, val_loader, test_loader = get_data_loader(

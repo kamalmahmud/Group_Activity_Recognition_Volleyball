@@ -1,11 +1,29 @@
 import os
 import os.path
 import pickle
-from typing import Any, Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple, Callable, Optional
 
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
+
+
+SPLITS = {
+    'train': ["1", "3", "6", "7", "10", "13", "15", "16", "18", "22", "23", "31",
+              "32", "36", "38", "39", "40", "41", "42", "48", "50", "52", "53", "54", ],
+    'val': ["0", "2", "8", "12", "17", "19", "24", "26", "27", "28", "30", "33", "46", "49", "51"],
+    'test': ['4', '5', '9', '11', '14', '20', '21', '25', '29', '34', '35', '37', '43', '44', '45', '47']
+}
+
+GROUP_LABELS = {
+            'l-pass': 0, 'r-pass': 1, 'l-spike': 2, 'r_spike': 3,
+            'l_set': 4, 'r_set': 5, 'l_winpoint': 6, 'r_winpoint': 7
+        }
+
+PLAYER_LABELS = {
+            'blocking': 0, 'digging': 1, 'falling': 2, 'jumping': 3,
+            'moving': 4, 'setting': 5, 'spiking': 6, 'standing': 7, 'waiting': 8
+}
 
 
 class VolleyballDataset(Dataset):
@@ -13,9 +31,8 @@ class VolleyballDataset(Dataset):
             self,
             pkl_path: str,
             videos_path: str,
-            transforms=None,
-            frame_transform=None,
-            crop_transform=None,
+            frame_transform: Optional[Callable] = None,
+            crop_transform: Optional[Callable] = None,
             split: str = "train",
             mode: str = "frame",
             player_order: str = "player_id",
@@ -23,52 +40,41 @@ class VolleyballDataset(Dataset):
             include_generated: bool = True,
     ):
         self.videos_path = videos_path
-        self.frame_transform = frame_transform if frame_transform is not None else transforms
-        self.crop_transform = crop_transform if crop_transform is not None else transforms
+        self.frame_transform = frame_transform
+        self.crop_transform = crop_transform
         self.pkl_path = pkl_path
         self.split = split
         self.mode = mode
         self.player_order = player_order
         self.include_lost = include_lost
         self.include_generated = include_generated
-        self.splits = {
-            'train': ["1", "3", "6", "7", "10", "13", "15", "16", "18", "22", "23", "31",
-                      "32", "36", "38", "39", "40", "41", "42", "48", "50", "52", "53", "54", ],
-            'val': ["0", "2", "8", "12", "17", "19", "24", "26", "27", "28", "30", "33", "46", "49", "51"],
-            'test': ['4', '5', '9', '11', '14', '20', '21', '25', '29', '34', '35', '37', '43', '44', '45', '47']
+
+        self._mode_dispatch: Dict[str, Tuple[Callable, Callable]] = {
+            "frame": (self._get_frame, self._build_frame_index),
+            "person": (self._get_person, self._build_person_index),
+            "frame_person": (self._get_frame_person, self._build_frame_person_index),
+            "temporal_frame": (self._get_temporal_frame, self._build_temporal_clip_index),
+            "temporal_person": (self._get_temporal_person, self._build_temporal_person_index),
         }
-        self.labels = {
-            'l-pass': 0, 'r-pass': 1, 'l-spike': 2, 'r_spike': 3,
-            'l_set': 4, 'r_set': 5, 'l_winpoint': 6, 'r_winpoint': 7
-        }
-        self.player_labels = {
-            'blocking': 0, 'digging': 1, 'falling': 2, 'jumping': 3,
-            'moving': 4, 'setting': 5, 'spiking': 6, 'standing': 7, 'waiting': 8
-        }
+        if mode not in self._mode_dispatch:
+            raise ValueError(f"mode must be one of {list(self._mode_dispatch)}, got {mode!r}")
+
         with open(self.pkl_path, "rb") as f:
             self.annotations = pickle.load(f)
 
-        self.samples = self._build_index(self.splits[split])
+        self.samples = self._mode_dispatch[mode][1](SPLITS[split])
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        item = self.samples[idx]
-        if self.mode == "frame":
-            return self._get_frame(item)
-        if self.mode == "person":
-            return self._get_person(item)
-        if self.mode == "frame_person":
-            return self._get_frame_person(item)
-        if self.mode == "temporal_frame":
-            return self._get_temporal_frame(item)
-        raise RuntimeError(f"Unhandled mode={self.mode!r}")
+        getter, _ = self._mode_dispatch[self.mode]
+        return getter(self.samples[idx])
 
     # __getitem__ Methods-------------------------------------------------------------------------------
     def _get_frame(self, item):
         image = self._load_frame_image(item["path"])
-        label = self.labels[item["group_label_name"]]
+        label = GROUP_LABELS[item["group_label_name"]]
         return image, label
 
     def _get_person(self, item: Dict[str, Any]) -> Dict[str, Any]:
@@ -147,19 +153,28 @@ class VolleyballDataset(Dataset):
         target = torch.tensor(item["target"], dtype=torch.long)
         return frames, target
 
-    # Index building--------------------------------------------------------------------------
-    def _build_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
-        if self.mode == "frame":
-            return self._build_frame_index(video_ids)
-        elif self.mode == "person":
-            return self._build_person_index(video_ids)
-        elif self.mode == "frame_person":
-            return self._build_frame_person_index(video_ids)
-        elif self.mode == "temporal_frame":
-            return self._build_temporal_clip_index(video_ids)
-        else:
-            raise ValueError(f"Unknown mode={self.mode!r}.")
+    def _get_temporal_person(self, item: Dict[str, Any]) -> Dict[str, Any]:
+        video_id = item["video_id"]
+        clip_id = item["clip_id"]
+        box_infos = item["box_infos"]
+        crops = []
+        label = None
+        for box_info in box_infos:
+            frame_id = box_info.frame_ID
+            if frame_id == int(clip_id):
+                label = box_info.category
+            image_path = self._img_path(video_id, clip_id, frame_id)
+            image = Image.open(image_path).convert("RGB")
 
+            x1, y1, x2, y2 = box_info.box
+            crop = image.crop((x1, y1, x2, y2))
+            crop = self._apply_crop_transform(crop)
+            crops.append(crop)
+        frames = torch.stack(crops, dim=0)
+        label = torch.tensor(PLAYER_LABELS[label], dtype=torch.long)
+        return frames, label
+
+    # Index building--------------------------------------------------------------------------
     def _build_frame_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
         samples = []
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
@@ -172,17 +187,17 @@ class VolleyballDataset(Dataset):
         samples = []
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
             frame_id = int(clip_id)
-            # the targeted frame and 1 frames after it
+            # the targeted frame and 1 frame after and before it
             for i in [-1, 0, 1]:
                 path = self._img_path(video_id, clip_id, frame_id + i)
                 boxes = self._boxes_for_frame(clip_dict, frame_id + i)
                 for box_info in boxes:
-                    if self.player_labels[box_info.category] == 7 and i != 0:
+                    if PLAYER_LABELS[box_info.category] == PLAYER_LABELS["standing"] and i != 0:
                         continue
                     samples.append({
                         "path": path,
                         "bbox": tuple(int(v) for v in box_info.box),
-                        "target": self.player_labels[box_info.category],
+                        "target": PLAYER_LABELS[box_info.category],
                     })
 
         return samples
@@ -195,8 +210,25 @@ class VolleyballDataset(Dataset):
             samples.append({
                 "path": self._img_path(video_id, clip_id, frame_id),
                 "boxes": [tuple(int(v) for v in b.box) for b in boxes],
-                "target": self.labels[clip_dict["category"]],
+                "target": GROUP_LABELS[clip_dict["category"]],
             })
+        return samples
+
+    def _build_temporal_person_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
+        samples = []
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            player_boxes: Dict[int, List[Any]] = {}
+            for boxes in clip_dict["frame_boxes_dct"].values():
+                for box_info in self._filter_boxes(list(boxes)):
+                    player_boxes.setdefault(int(box_info.player_ID), []).append(box_info)
+
+            for player_id, box_infos in player_boxes.items():
+                samples.append({
+                    "video_id":  video_id,
+                    "clip_id":   clip_id,
+                    "player_id": player_id,
+                    "box_infos": box_infos,
+                })
         return samples
 
     def _build_temporal_clip_index(self, video_ids: Sequence[str]) -> List[Dict[str, Any]]:
@@ -206,7 +238,7 @@ class VolleyballDataset(Dataset):
                 "video_id": video_id,
                 "clip_id": clip_id,
                 "frame_ids": self._sorted_frame_ids(clip_dict),
-                "target": self.labels[clip_dict["category"]],
+                "target": GROUP_LABELS[clip_dict["category"]],
                 "clip_dict": clip_dict,
             })
         return samples
@@ -235,7 +267,7 @@ class VolleyballDataset(Dataset):
             "clip_id": clip_id,
             "frame_id": frame_id,
             "path": self._img_path(video_id, clip_id, frame_id),
-            "group_label": self.labels[group_label_name],
+            "group_label": GROUP_LABELS[group_label_name],
             "group_label_name": group_label_name,
             "boxes": [self._box_to_dict(b) for b in boxes],
         }
@@ -279,7 +311,7 @@ class VolleyballDataset(Dataset):
             "player_id": int(box_info.player_ID),
             "frame_id": int(box_info.frame_ID),
             "bbox": tuple(int(v) for v in box_info.box),
-            "label": self.player_labels[label_name],
+            "label": PLAYER_LABELS[label_name],
             "label_name": label_name,
             "lost": int(getattr(box_info, "lost", 0)),
             "grouping": int(getattr(box_info, "grouping", 0)),

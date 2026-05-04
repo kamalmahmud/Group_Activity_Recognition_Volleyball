@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from .dataset import VolleyballDataset
+from .datasetv2 import VolleyballDataset
 # from collections import Counter
 # import torch
 # from torch.utils.data import WeightedRandomSampler
