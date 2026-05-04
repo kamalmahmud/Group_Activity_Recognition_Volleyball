@@ -76,7 +76,7 @@ def plot_confusion_matrix(
     cmap="Blues",
 ):
     """
-    Plot and save a row-normalised (percentile) confusion matrix.
+    Plot and save_path a row-normalised (percentile) confusion matrix.
 
     Each cell shows the percentage of true-class samples predicted
     as a given class, so every row sums to 100 %.
@@ -136,7 +136,7 @@ def full_evaluation(
     cm_save_path="confusion_matrix.png",
 ):
     """
-    Run evaluate(), print the classification report, and save the
+    Run evaluate(), print the classification report, and save_path the
     confusion matrix in one call.  Intended for final test-set scoring.
     """
     loss, acc, preds, labels = evaluate(

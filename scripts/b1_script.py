@@ -6,13 +6,10 @@ from data import GROUP_LABELS
 from data.data_loader import get_data_loader
 from data.transformers import get_transform
 from models.b1_model import B1Model
+from scripts import pkl_path, videos_path, device, save_path
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
-videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
-save = "/kaggle/working/"
 batch_size = 64
 num_workers = 4
 lr = 1e-4
@@ -45,7 +42,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         30,
-        save, )
+        save_path, )
 
     full_evaluation(model, test_loader,
                     criterion,

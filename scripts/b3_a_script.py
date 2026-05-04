@@ -1,32 +1,23 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+
+from data import PLAYER_LABELS
 from data.data_loader import get_data_loader
 from data.transformers import get_transform
 from models.b3_a_model import B3AModel
+from scripts import pkl_path, videos_path, device, save_path
+
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/2/2/best_model.pth"
-pkl_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/annot_all.pkl"
-videos_path = "/kaggle/input/datasets/sherif31/group-activity-recognition-volleyball/videos"
-save = "/kaggle/working/"
 batch_size = 32
 num_workers = 4
 lr = 1e-4
 
-CLASS_NAMES = [
-    "blocking",
-    "digging",
-    "falling",
-    "jumping",
-    "moving",
-    "setting",
-    "spiking",
-    "standing",
-    "waiting",
-]
+CLASS_NAMES = PLAYER_LABELS.keys()
 
 frame_transform, crop_transform = get_transform()
 train_loader, val_loader, test_loader = get_data_loader(
@@ -81,7 +72,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         5,
-        save, )
+        save_path, )
     best_stage2_path = "/kaggle/working/best_model.pth"
 
     best_checkpoint = torch.load(best_stage2_path, map_location=device)
