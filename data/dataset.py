@@ -26,7 +26,7 @@ PLAYER_LABELS = {
 }
 
 
-class VolleyballDataset(Dataset):
+class VolleyballDatasetV1(Dataset):
     def __init__(
             self,
             pkl_path: str,
