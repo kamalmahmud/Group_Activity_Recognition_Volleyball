@@ -10,7 +10,6 @@ class DatasetGettersMixin:
     def _get_frame(self, item: Dict[str, Any]):
         image = self._load_frame_image(item["path"])
         label = GROUP_LABELS[item["group_label_name"]]
-
         return image, label
 
     def _get_person(self, item: Dict[str, Any]):

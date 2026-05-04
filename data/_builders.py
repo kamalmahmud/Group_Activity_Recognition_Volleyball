@@ -5,8 +5,8 @@ from .constants import GROUP_LABELS, PLAYER_LABELS
 
 class DatasetIndexBuildersMixin:
     def _build_frame_index(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
 
@@ -27,8 +27,8 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_person_index(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
 
@@ -42,8 +42,8 @@ class DatasetIndexBuildersMixin:
 
                 for box_info in boxes:
                     is_standing = (
-                        PLAYER_LABELS[box_info.category]
-                        == PLAYER_LABELS["standing"]
+                            PLAYER_LABELS[box_info.category]
+                            == PLAYER_LABELS["standing"]
                     )
 
                     if is_standing and offset != 0:
@@ -60,8 +60,8 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_frame_person_index(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
 
@@ -80,8 +80,8 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_temporal_clip_index(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
 
@@ -99,8 +99,8 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_temporal_person_index(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
 

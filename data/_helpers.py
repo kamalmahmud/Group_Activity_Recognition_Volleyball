@@ -8,8 +8,8 @@ from .constants import GROUP_LABELS, PLAYER_LABELS
 
 class DatasetHelpersMixin:
     def _iter_clips(
-        self,
-        video_ids: Sequence[str],
+            self,
+            video_ids: Sequence[str],
     ) -> Iterable[Tuple[str, str, Dict[str, Any]]]:
         for video_id in video_ids:
             if video_id not in self.annotations:
@@ -32,12 +32,12 @@ class DatasetHelpersMixin:
         )
 
     def _base_item(
-        self,
-        video_id: str,
-        clip_id: str,
-        frame_id: int,
-        clip_dict: Dict[str, Any],
-        boxes: Sequence[Any],
+            self,
+            video_id: str,
+            clip_id: str,
+            frame_id: int,
+            clip_dict: Dict[str, Any],
+            boxes: Sequence[Any],
     ) -> Dict[str, Any]:
         group_label_name = clip_dict["category"]
 
@@ -59,9 +59,9 @@ class DatasetHelpersMixin:
         )
 
     def _boxes_for_frame(
-        self,
-        clip_dict: Dict[str, Any],
-        frame_id: int,
+            self,
+            clip_dict: Dict[str, Any],
+            frame_id: int,
     ) -> List[Any]:
         frame_boxes_dct = clip_dict["frame_boxes_dct"]
         boxes = list(frame_boxes_dct.get(int(frame_id), []))
