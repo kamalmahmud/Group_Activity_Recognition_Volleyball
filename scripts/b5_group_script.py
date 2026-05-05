@@ -10,7 +10,7 @@ from utils.trainer import train
 from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
-checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/2/3/best_model.pth"
+checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
 lr = 0.0001
 batch_size = 16
 num_workers = 4
