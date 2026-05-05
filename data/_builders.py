@@ -79,6 +79,26 @@ class DatasetIndexBuildersMixin:
 
         return samples
 
+    def _build_temporal_person_clip_index(self, video_ids):
+        samples = []
+
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            frames = []
+
+            for frame_id in sorted(clip_dict["frame_boxes_dct"]):
+                boxes = self._boxes_for_frame(clip_dict, frame_id)
+
+                frames.append({
+                    "frame_id": frame_id,
+                    "boxes": boxes,
+                    "frame_path": self._img_path(video_id, clip_id, frame_id),
+                })
+
+            label = GROUP_LABELS[clip_dict["category"]]
+            samples.append((frames, label))
+
+        return samples
+
     def _build_temporal_clip_index(
             self,
             video_ids: Sequence[str],

@@ -125,3 +125,21 @@ class DatasetGettersMixin:
         label = torch.tensor(PLAYER_LABELS[label_name], dtype=torch.long)
 
         return frames, label
+
+    def _get_temporal_person_clip(self, item):
+        list_of_frames, label = item
+        frames = []
+        for frame in list_of_frames:
+            image = Image.open(frame["frame_path"]).convert("RGB")
+            crops = []
+            for box in frame["boxes"]:
+                crop = image.crop(box)
+                crop = self._apply_crop_transform(crop)
+                crops.append(crop)
+
+            crops = torch.stack(crops, dim=0)
+            frames.append(crops)
+
+        frames = torch.stack(frames, dim=0)
+        target = torch.tensor(label, dtype=torch.long)
+        return frames, target

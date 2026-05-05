@@ -7,11 +7,11 @@ from models.b3_a_model import B3AModel
 class B3BModel(nn.Module):
     def __init__(self, ckpt_path, num_classes=8):
         super().__init__()
-        old_model = B3AModel(num_classes=9)
+        b3a_model = B3AModel(num_classes=9)
         checkpoint = torch.load(ckpt_path, map_location="cpu")
-        old_model.load_state_dict(checkpoint["model_state_dict"])
+        b3a_model.load_state_dict(checkpoint["model_state_dict"])
 
-        self.feature_extractor = old_model.model
+        self.feature_extractor = b3a_model.model
 
         # remove Dropout + Linear(2048 -> 9)
         self.feature_extractor.fc = nn.Identity()

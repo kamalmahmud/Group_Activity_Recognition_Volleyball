@@ -58,6 +58,10 @@ class VolleyballDataset(
                 self._get_temporal_person,
                 self._build_temporal_person_index,
             ),
+            "temporal_person_clip": (
+                self._get_temporal_person_clip,
+                self._build_temporal_person_clip_index,
+            ),
         }
 
         if mode not in self._mode_dispatch:
