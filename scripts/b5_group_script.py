@@ -12,7 +12,7 @@ from data import GROUP_LABELS
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
 lr = 0.0001
-batch_size = 16
+batch_size = 8
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 frame_transform, crop_transform = get_transform()
