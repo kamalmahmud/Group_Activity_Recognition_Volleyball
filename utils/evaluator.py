@@ -1,41 +1,31 @@
 import torch
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-
-from sklearn.metrics import (
-    classification_report,
-    confusion_matrix,
-    accuracy_score,
-)
+from sklearn.metrics import (classification_report, confusion_matrix, accuracy_score, )
 from tqdm import tqdm
+
+matplotlib.use("Agg")
 
 
 # ── Core evaluation pass ──────────────────────────────────────────────────────
 
 def evaluate(model, loader, criterion, device, class_names, print_report=True):
-    """
-    Run one full pass over `loader` and return aggregated metrics.
-
-    Returns
-    -------
-    loss      : float   – mean cross-entropy over the split
-    accuracy  : float   – overall accuracy
-    all_preds : list[int]
-    all_labels: list[int]
-    """
     model.eval()
     running_loss = 0.0
     all_preds, all_labels = [], []
 
-    with torch.no_grad():
+    device_type = device.type if isinstance(device, torch.device) else str(device)
+
+    with torch.inference_mode():
         for frames, labels in tqdm(loader, desc="Evaluating", leave=False):
             frames = frames.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
 
-            logits = model(frames)
-            loss = criterion(logits, labels)
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=device_type == "cuda"):
+                logits = model(frames)
+                loss = criterion(logits, labels)
+
             running_loss += loss.item() * frames.size(0)
 
             preds = logits.argmax(dim=1)
@@ -68,12 +58,12 @@ def print_classification_report(labels, preds, class_names):
 # ── Percentile confusion matrix ───────────────────────────────────────────────
 
 def plot_confusion_matrix(
-    labels,
-    preds,
-    class_names,
-    save_path="confusion_matrix.png",
-    figsize=(10, 8),
-    cmap="Blues",
+        labels,
+        preds,
+        class_names,
+        save_path="confusion_matrix.png",
+        figsize=(10, 8),
+        cmap="Blues",
 ):
     """
     Plot and save_path a row-normalised (percentile) confusion matrix.
@@ -128,12 +118,12 @@ def plot_confusion_matrix(
 # ── Convenience wrapper ───────────────────────────────────────────────────────
 
 def full_evaluation(
-    model,
-    loader,
-    criterion,
-    device,
-    class_names,
-    cm_save_path="confusion_matrix.png",
+        model,
+        loader,
+        criterion,
+        device,
+        class_names,
+        cm_save_path="confusion_matrix.png",
 ):
     """
     Run evaluate(), print the classification report, and save_path the

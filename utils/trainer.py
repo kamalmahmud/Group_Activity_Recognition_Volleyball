@@ -125,7 +125,7 @@ def train(
                 "val_loss": val_loss,
             }, ckpt_path)
 
-            print(f"  ✓ New best player_model saved (val_acc={val_acc:.4f})")
+            print(f"  New best model saved (val_acc={val_acc:.4f})")
 
     print(f"\n{'─' * 60}")
     print(f"Training complete. Best val_acc: {best_val_acc:.4f} at epoch {best_epoch}.")

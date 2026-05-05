@@ -140,13 +140,9 @@ class DatasetGettersMixin:
 
             crops = torch.stack(crops, dim=0)
             num_players = crops.shape[0]
-            # pad with zero if less than 12
+            # pad with last image if less than 12
             if num_players < 12:
-                pad = torch.zeros(
-                    max_players - num_players,
-                    *crops.shape[1:],
-                    dtype=crops.dtype
-                )
+                pad = crops[-1:].repeat(max_players - num_players, 1, 1, 1)
                 crops = torch.cat([crops, pad], dim=0)
 
             frames.append(crops)
