@@ -13,6 +13,8 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
     correct = 0
     total = 0
 
+    device_type = device.type if isinstance(device, torch.device) else str(device)
+
     pbar = tqdm(loader, desc=f"Epoch {epoch} [Train]", leave=False)
 
     for frames, labels in pbar:
@@ -21,7 +23,7 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
 
         optimizer.zero_grad(set_to_none=True)
 
-        with torch.autocast(device_type="cuda", dtype=torch.float16):
+        with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=device_type == "cuda", ):
             outputs = model(frames)
             loss = criterion(outputs, labels)
 
@@ -54,6 +56,7 @@ def train(
         criterion,
         optimizer,
         class_names,
+        scheduler=None,
         num_epochs: int = 30,
         save_dir: str = "checkpoints",
 ):
@@ -64,7 +67,7 @@ def train(
 
     model = model.to(device)
 
-    scaler = torch.amp.GradScaler("cuda")
+    scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
 
     best_val_acc = 0.0
     best_epoch = -1
@@ -75,15 +78,7 @@ def train(
     for epoch in range(1, num_epochs + 1):
         t0 = time.time()
 
-        train_loss, train_acc = train_one_epoch(
-            model,
-            train_loader,
-            criterion,
-            optimizer,
-            device,
-            epoch,
-            scaler,
-        )
+        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device, epoch, scaler, )
 
         val_loss, val_acc, _, _ = evaluate(
             model,
@@ -93,13 +88,18 @@ def train(
             class_names=class_names,
             print_report=False,
         )
+        if scheduler is not None:
+            scheduler.step(val_loss)
 
         elapsed = time.time() - t0
+
+        current_lr = optimizer.param_groups[0]["lr"]
 
         print(
             f"Epoch [{epoch:>3}/{num_epochs}] "
             f"| train loss: {train_loss:.4f}  acc: {train_acc:.4f} "
             f"| val loss: {val_loss:.4f}  acc: {val_acc:.4f} "
+            f"| lr: {current_lr:.2e} "
             f"| {elapsed:.1f}s"
         )
 
@@ -109,6 +109,7 @@ def train(
             "train_acc": train_acc,
             "val_loss": val_loss,
             "val_acc": val_acc,
+            "lr": current_lr,
         })
 
         if val_acc > best_val_acc:
@@ -121,6 +122,7 @@ def train(
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict() if scheduler is not None else None,
                 "val_acc": val_acc,
                 "val_loss": val_loss,
             }, ckpt_path)
@@ -130,7 +132,7 @@ def train(
     print(f"\n{'─' * 60}")
     print(f"Training complete. Best val_acc: {best_val_acc:.4f} at epoch {best_epoch}.")
 
-    print("\nLoading best player_model for test-set evaluation …")
+    print("\nLoading best model for test-set evaluation …")
 
     checkpoint = torch.load(
         os.path.join(save_dir, "best_model.pth"),

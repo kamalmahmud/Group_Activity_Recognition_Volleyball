@@ -13,12 +13,16 @@ class B5BModel(nn.Module):
             for param in self.player_model.parameters():
                 param.requires_grad = False
 
-        self.group_classifier = nn.Linear(hidden_size, num_classes)
+        self.group_classifier = nn.Sequential(
+            nn.LayerNorm(hidden_size),
+            nn.Dropout(0.3),
+            nn.Linear(hidden_size, num_classes)
+        )
 
     def forward(self, x):
         # x: [B, 12, 9, 3, 224, 224]
         b, n, t, c, h, w = x.shape
-        x = x.reshape(b * n, t, c, h, w)
+        x = x.contiguous().view(b * n, t, c, h, w)
 
         if self.freeze_backbone:
             self.player_model.eval()

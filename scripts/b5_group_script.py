@@ -11,7 +11,7 @@ from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-lr = 0.0001
+lr = 1e-3
 batch_size = 16
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
@@ -31,8 +31,15 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
 model = B5BModel(player_model=player_model, freeze_backbone=True).to(device)
-optimizer = AdamW(model.parameters(), lr=lr)
 criterion = nn.CrossEntropyLoss()
+optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
 
 if __name__ == "__main__":
     model, history = train(
@@ -43,6 +50,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         25,
         save_path, )
 
