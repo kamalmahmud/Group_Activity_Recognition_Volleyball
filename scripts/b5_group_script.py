@@ -25,8 +25,6 @@ train_loader, val_loader, test_loader = get_data_loader(
     num_workers=num_workers,
     crop_transform=crop_transform,
 )
-x, y = next(iter(train_loader))
-print(x.shape)
 
 player_model = B5Model().to(device)
 checkpoint = torch.load(checkpoint_path, map_location="cpu")
