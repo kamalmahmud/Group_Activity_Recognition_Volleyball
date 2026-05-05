@@ -128,6 +128,7 @@ class DatasetGettersMixin:
 
     def _get_temporal_person_clip(self, item):
         list_of_frames, label = item
+        max_players = 12
         frames = []
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
@@ -154,6 +155,6 @@ class DatasetGettersMixin:
 
         # change to [12, T, C, H, W]
         frames = frames.permute(1, 0, 2, 3, 4)
-        
+
         target = torch.tensor(label, dtype=torch.long)
         return frames, target
