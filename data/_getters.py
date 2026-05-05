@@ -138,8 +138,22 @@ class DatasetGettersMixin:
                 crops.append(crop)
 
             crops = torch.stack(crops, dim=0)
+            num_players = crops.shape[0]
+            # pad with zero if less than 12
+            if num_players < 12:
+                pad = torch.zeros(
+                    max_players - num_players,
+                    *crops.shape[1:],
+                    dtype=crops.dtype
+                )
+                crops = torch.cat([crops, pad], dim=0)
+
             frames.append(crops)
 
         frames = torch.stack(frames, dim=0)
+
+        # change to [12, T, C, H, W]
+        frames = frames.permute(1, 0, 2, 3, 4)
+        
         target = torch.tensor(label, dtype=torch.long)
         return frames, target
