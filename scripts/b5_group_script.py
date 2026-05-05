@@ -7,7 +7,7 @@ from models.b5_model import B5Model
 from scripts import pkl_path, videos_path, device, save_path
 from utils.evaluator import full_evaluation
 from utils.trainer import train
-from models.b5b_model import B5BModel
+from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/resnet50-player-classifier/pytorch/2/3/best_model.pth"
