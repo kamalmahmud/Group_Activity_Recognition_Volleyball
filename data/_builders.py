@@ -90,7 +90,7 @@ class DatasetIndexBuildersMixin:
 
                 frames.append({
                     "frame_id": frame_id,
-                    "boxes": boxes,
+                    "boxes": [tuple(int(v) for v in box.box) for box in boxes],
                     "frame_path": self._img_path(video_id, clip_id, frame_id),
                 })
 
