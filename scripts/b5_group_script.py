@@ -43,7 +43,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
-        5,
+        25,
         save_path, )
 
     full_evaluation(model, test_loader,
