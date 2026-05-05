@@ -15,21 +15,19 @@ class B5BModel(nn.Module):
         self.group_classifier = nn.Linear(hidden_size, num_classes)
 
     def forward(self, x):
-        """
-                x shape:
-                [batch_size, num_players, num_frames, channels, height, width]
-
-                Example:
-                [B, 12, T, 3, H, W]
-                """
+        # x: [B, 12, 9, 3, 224, 224]
         b, n, t, c, h, w = x.shape
         x = x.reshape(b * n, t, c, h, w)
 
-        _, player_features = self.player_model(x, return_features=True)
-        # [batch size * num_players, hidden_size]
+        if self.freeze_backbone:
+            self.player_model.eval()
+            with torch.no_grad():
+                _, player_features = self.player_model(x, return_features=True)
+        else:
+            _, player_features = self.player_model(x, return_features=True)
+
         player_features = player_features.reshape(b, n, -1)
 
-        # max pooling over players
         group_features, _ = player_features.max(dim=1)
 
         group_logits = self.group_classifier(group_features)
