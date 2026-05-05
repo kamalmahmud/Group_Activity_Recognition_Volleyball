@@ -51,7 +51,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        25,
+        10,
         save_path, )
 
     full_evaluation(model, test_loader,
