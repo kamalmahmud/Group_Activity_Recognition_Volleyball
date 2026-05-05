@@ -23,7 +23,7 @@ class VolleyballDataset(
             crop_transform: Optional[Callable] = None,
             split: str = "train",
             mode: str = "frame",
-            player_order: str = "player_id",
+            player_order: str = "x",
             include_lost: bool = True,
             include_generated: bool = True,
     ):
