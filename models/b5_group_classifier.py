@@ -35,8 +35,7 @@ class B5BModel(nn.Module):
 
         if mask is not None:
             mask = mask.to(device=player_features.device, dtype=torch.bool)
-
-            # AMP / fp16 safe negative value
+            mask = mask.any(dim=2)
             neg_value = torch.finfo(player_features.dtype).min
 
             player_features = player_features.masked_fill(
