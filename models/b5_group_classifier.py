@@ -14,9 +14,11 @@ class B5BModel(nn.Module):
                 param.requires_grad = False
 
         self.group_classifier = nn.Sequential(
-            nn.LayerNorm(hidden_size),
+            nn.LayerNorm(512),
+            nn.Linear(512, 128),
+            nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(hidden_size, num_classes)
+            nn.Linear(128, num_classes)
         )
 
     def forward(self, x, mask=None):
