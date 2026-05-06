@@ -34,9 +34,9 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
 
         with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=device_type == "cuda", ):
             if mask is not None:
-                outputs = model(inputs, mask=mask)
+                outputs = model(frames, mask=mask)
             else:
-                outputs = model(inputs)
+                outputs = model(frames)
 
             loss = criterion(outputs, labels)
 
