@@ -19,7 +19,7 @@ class B5BModel(nn.Module):
             nn.Linear(hidden_size, num_classes)
         )
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         # x: [B, 12, 9, 3, 224, 224]
         b, n, t, c, h, w = x.shape
         x = x.contiguous().view(b * n, t, c, h, w)
@@ -33,7 +33,18 @@ class B5BModel(nn.Module):
 
         player_features = player_features.reshape(b, n, -1)
 
-        group_features, _ = player_features.max(dim=1)
+        if mask is not None:
+            mask = mask.to(device=player_features.device, dtype=torch.bool)
+
+            # AMP / fp16 safe negative value
+            neg_value = torch.finfo(player_features.dtype).min
+
+            player_features = player_features.masked_fill(
+                ~mask.unsqueeze(-1),
+                neg_value
+            )
+
+        group_features = player_features.max(dim=1).values
 
         group_logits = self.group_classifier(group_features)
 

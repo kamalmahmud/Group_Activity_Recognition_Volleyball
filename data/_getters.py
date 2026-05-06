@@ -130,6 +130,8 @@ class DatasetGettersMixin:
         list_of_frames, label = item
         max_players = 12
         frames = []
+        masks = []
+
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
             crops = []
@@ -138,19 +140,30 @@ class DatasetGettersMixin:
                 crop = self._apply_crop_transform(crop)
                 crops.append(crop)
 
-            crops = torch.stack(crops, dim=0)
-            num_players = crops.shape[0]
-            # pad with last image if less than 12
-            if num_players < 12:
-                pad = crops[-1:].repeat(max_players - num_players, 1, 1, 1)
-                crops = torch.cat([crops, pad], dim=0)
+            num_players = len(crops)
+
+            mask = torch.zeros(max_players, dtype=torch.bool)
+            mask[:num_players] = True
+
+            if num_players > 0:
+                crops = torch.stack(crops, dim=0)
+
+                if num_players < max_players:
+                    # dummy padding, not real player
+                    pad = torch.zeros_like(crops[:1]).repeat(
+                        max_players - num_players, 1, 1, 1
+                    )
+                    crops = torch.cat([crops, pad], dim=0)
 
             frames.append(crops)
+            masks.append(mask)
 
         frames = torch.stack(frames, dim=0)
+        masks = torch.stack(masks, dim=0)
 
         # change to [12, T, C, H, W]
         frames = frames.permute(1, 0, 2, 3, 4)
+        masks = masks.permute(1, 0)
 
         target = torch.tensor(label, dtype=torch.long)
-        return frames, target
+        return frames, target, masks

@@ -17,14 +17,27 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
 
     pbar = tqdm(loader, desc=f"Epoch {epoch} [Train]", leave=False)
 
-    for frames, labels in pbar:
+    for batch in pbar:
+        if len(batch) == 2:
+            frames, labels = batch
+            mask = None
+        elif len(batch) == 3:
+            frames, labels, mask = batch
+
         frames = frames.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
+
+        if mask is not None:
+            mask = mask.to(device, non_blocking=True)
 
         optimizer.zero_grad(set_to_none=True)
 
         with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=device_type == "cuda", ):
-            outputs = model(frames)
+            if mask is not None:
+                outputs = model(inputs, mask=mask)
+            else:
+                outputs = model(inputs)
+
             loss = criterion(outputs, labels)
 
         scaler.scale(loss).backward()
