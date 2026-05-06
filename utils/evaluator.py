@@ -18,12 +18,23 @@ def evaluate(model, loader, criterion, device, class_names, print_report=True):
     device_type = device.type if isinstance(device, torch.device) else str(device)
 
     with torch.inference_mode():
-        for frames, labels in tqdm(loader, desc="Evaluating", leave=False):
+        for batch in tqdm(loader, desc="Evaluating", leave=False):
+            if len(batch) == 2:
+                frames, labels = batch
+                mask = None
+            elif len(batch) == 3:
+                frames, labels, mask = batch
+
             frames = frames.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
+            if mask is not None:
+                mask = mask.to(device, non_blocking=True)
 
             with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=device_type == "cuda"):
-                logits = model(frames)
+                if mask is not None:
+                    logits = model(frames, mask=mask)
+                else:
+                    logits = model(frames)
                 loss = criterion(logits, labels)
 
             running_loss += loss.item() * frames.size(0)
