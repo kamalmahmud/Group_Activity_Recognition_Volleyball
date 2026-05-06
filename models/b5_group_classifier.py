@@ -14,7 +14,6 @@ class B5BModel(nn.Module):
                 param.requires_grad = False
 
         self.group_classifier = nn.Sequential(
-            nn.LayerNorm(512),
             nn.Linear(512, 128),
             nn.ReLU(),
             nn.Dropout(0.3),
