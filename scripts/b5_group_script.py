@@ -10,7 +10,7 @@ from utils.trainer import train
 from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
-checkpoint_path = "/content/best_model.pth"
+checkpoint_path = "/content/best_model_1.pth"
 lr = 1e-3
 batch_size = 64
 num_workers = 8
