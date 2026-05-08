@@ -30,9 +30,12 @@ player_model = B5Model().to(device)
 checkpoint = torch.load(checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
-model = B5BModel(player_model=player_model, freeze_backbone=True).to(device)
+model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+optimizer = AdamW([
+    {"params": model.player_model.parameters(), "lr": 1e-5},
+    {"params": model.group_classifier.parameters(), "lr": 1e-3},
+], weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
