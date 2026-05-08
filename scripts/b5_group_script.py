@@ -12,7 +12,7 @@ from data import GROUP_LABELS
 
 checkpoint_path = "/content/best_model_1.pth"
 lr = 1e-3
-batch_size = 64
+batch_size = 32
 num_workers = 8
 CLASS_NAMES = list(GROUP_LABELS.keys())
 frame_transform, crop_transform = get_transform()
