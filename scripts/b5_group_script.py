@@ -12,8 +12,8 @@ from data import GROUP_LABELS
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
 lr = 1e-3
-batch_size = 2
-num_workers = 4
+batch_size = 64
+num_workers = 8
 CLASS_NAMES = list(GROUP_LABELS.keys())
 frame_transform, crop_transform = get_transform()
 train_loader, val_loader, test_loader = get_data_loader(
@@ -54,11 +54,11 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        3,
+        20,
         save_path, )
 
     full_evaluation(model, test_loader,
                     criterion,
                     device=device,
                     class_names=CLASS_NAMES,
-                    cm_save_path='/kaggle/working/confusion_matrix.png')
+                    cm_save_path=f'{save_path}confusion_matrix_b5_group.png')
