@@ -13,7 +13,7 @@ class B5BModel(nn.Module):
             for param in self.player_model.parameters():
                 param.requires_grad = False
 
-        self.group_classifier = nn.nn.Sequential(
+        self.group_classifier = nn.Sequential(
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
