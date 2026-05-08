@@ -10,7 +10,7 @@ from utils.trainer import train
 
 lr = 0.0001
 batch_size = 16
-num_workers = 4
+num_workers = 8
 
 CLASS_NAMES = PLAYER_LABELS.keys()
 frame_transform, crop_transform = get_transform()
@@ -29,6 +29,12 @@ model = model.to(device)
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
 
 if __name__ == "__main__":
     model, history = train(
@@ -39,6 +45,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         25,
         save_path, )
 
