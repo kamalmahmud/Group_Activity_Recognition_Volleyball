@@ -1,6 +1,7 @@
-import torch.nn as nn
-from torch.optim import AdamW
 from data import PLAYER_LABELS
+import torch.nn as nn
+import torch
+from torch.optim import AdamW
 from data.data_loader import get_data_loader
 from data.transformers import get_transform
 from models.b5_model import B5Model
