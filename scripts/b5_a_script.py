@@ -10,8 +10,8 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 lr = 0.0001
-batch_size = 16
-num_workers = 8
+batch_size = 64
+num_workers = 16
 
 CLASS_NAMES = PLAYER_LABELS.keys()
 frame_transform, crop_transform = get_transform()
