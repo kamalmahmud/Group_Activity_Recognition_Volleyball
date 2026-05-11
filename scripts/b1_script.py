@@ -10,9 +10,9 @@ from scripts import pkl_path, videos_path, device, save_path
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 
-batch_size = 64
+batch_size = 128
 num_workers = 4
-lr = 1e-4
+lr = 1e-3
 CLASS_NAMES = GROUP_LABELS.keys()
 
 frame_transform, crop_transform = get_transform()
@@ -32,9 +32,16 @@ model = model.to(device)
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
-    
+
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
 
 if __name__ == "__main__":
     model, history = train(
