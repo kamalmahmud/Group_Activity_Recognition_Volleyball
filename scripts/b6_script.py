@@ -12,7 +12,7 @@ from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
 lr = 1e-3
-batch_size = 4
+batch_size = 32
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
@@ -31,7 +31,7 @@ model = B6Model(ckpt_path=checkpoint_path, num_classes=8, freeze_backbone=True).
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
-    
+
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(
     [p for p in model.parameters() if p.requires_grad],
