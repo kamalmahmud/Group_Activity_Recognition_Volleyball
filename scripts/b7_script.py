@@ -12,7 +12,7 @@ from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
 lr = 1e-3
-batch_size = 16
+batch_size = 8
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
