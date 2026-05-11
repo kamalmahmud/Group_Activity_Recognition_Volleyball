@@ -52,6 +52,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         30,
         save_path, )
 
