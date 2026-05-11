@@ -14,3 +14,22 @@ Classification Report
     accuracy                           0.73      1337
    macro avg       0.71      0.70      0.70      1337
 weighted avg       0.74      0.73      0.73      1337
+
+---------------------------------------------------------------------------------------------------
+Classification Report (Player action)
+────────────────────────────────────────────────────────────
+              precision    recall  f1-score   support
+
+    blocking       0.91      0.84      0.87       855
+     digging       0.60      0.40      0.48       659
+     falling       0.85      0.84      0.84       377
+     jumping       0.14      0.14      0.14        88
+      moving       0.68      0.53      0.59      1352
+     setting       0.85      0.80      0.82       372
+     spiking       0.87      0.76      0.81       372
+    standing       0.86      0.94      0.89     10819
+     waiting       0.61      0.42      0.50      1040
+
+    accuracy                           0.83     15934
+   macro avg       0.71      0.63      0.66     15934
+weighted avg       0.81      0.83      0.82     15934

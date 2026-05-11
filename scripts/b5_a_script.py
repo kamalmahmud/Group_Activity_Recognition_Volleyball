@@ -54,4 +54,4 @@ if __name__ == "__main__":
                     criterion,
                     device=device,
                     class_names=CLASS_NAMES,
-                    cm_save_path='{save_path}confusion_matrix_b5_player.png')
+                    cm_save_path=f'{save_path}confusion_matrix_b5_player.png')
