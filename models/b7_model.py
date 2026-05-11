@@ -64,5 +64,5 @@ class B7Model(nn.Module):
         frame_feats = self.player_model.model(player)
         frame_feats = frame_feats.reshape(bn, t, -1)  # [B*N, T, 2048]
 
-        lstm_out, _ = self.lstm(frame_feats)  # [B*N, T, 512]
+        lstm_out, _ = self.player_model.lstm(frame_feats)  # [B*N, T, 512]
         return lstm_out
