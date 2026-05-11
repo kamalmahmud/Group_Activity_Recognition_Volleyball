@@ -29,6 +29,10 @@ train_loader, val_loader, test_loader = get_data_loader(
 # ── Model / Loss / Optimizer ─────────────────────────────────────────────
 model = B1Model(num_classes=8)
 model = model.to(device)
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+    
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.parameters(), lr=lr)
 
