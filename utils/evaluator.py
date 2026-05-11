@@ -8,8 +8,6 @@ from tqdm import tqdm
 matplotlib.use("Agg")
 
 
-# ── Core evaluation pass ──────────────────────────────────────────────────────
-
 def evaluate(model, loader, criterion, device, class_names, print_report=True):
     model.eval()
     running_loss = 0.0
@@ -17,7 +15,7 @@ def evaluate(model, loader, criterion, device, class_names, print_report=True):
 
     device_type = device.type if isinstance(device, torch.device) else str(device)
 
-    with torch.inference_mode():
+    with torch.no_grad():
         for batch in tqdm(loader, desc="Evaluating", leave=False):
             if len(batch) == 2:
                 frames, labels = batch
