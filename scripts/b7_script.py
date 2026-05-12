@@ -29,26 +29,26 @@ player_model = B5Model().to(device)
 checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
-# b7_check_point = "/content/best_model.pth"
+b7_check_point = "/content/best_model.pth"
 model = B7Model(player_model,freeze_backbone=True).to(device)
-# checkpoint_b7 = torch.load(b7_check_point, map_location="cpu")
-# model.load_state_dict(checkpoint_b7["model_state_dict"])
+checkpoint_b7 = torch.load(b7_check_point, map_location="cpu")
+model.load_state_dict(checkpoint_b7["model_state_dict"])
 
 criterion = nn.CrossEntropyLoss()
-# optimizer = AdamW(
-#     [
-#         {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
-#         {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
-#         {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
-#         {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
-#     ],
-#     weight_decay=1e-4,
-# )
 optimizer = AdamW(
-    [p for p in model.parameters() if p.requires_grad],
-    lr=1e-3,
+    [
+        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
+        {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
+        {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
+        {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
+    ],
     weight_decay=1e-4,
 )
+# optimizer = AdamW(
+#     [p for p in model.parameters() if p.requires_grad],
+#     lr=1e-3,
+#     weight_decay=1e-4,
+# )
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
