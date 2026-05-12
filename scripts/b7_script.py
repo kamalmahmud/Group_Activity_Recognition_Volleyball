@@ -30,7 +30,7 @@ checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
 b7_check_point = "/content/best_model.pth"
-model = B7Model(player_model,freeze_backbone=True).to(device)
+model = B7Model(player_model,freeze_backbone=False).to(device)
 checkpoint_b7 = torch.load(b7_check_point, map_location="cpu")
 state_dict = checkpoint_b7["model_state_dict"]
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        20,
+        7,
         save_path,
     )
 
