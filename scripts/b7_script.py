@@ -11,7 +11,6 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-lr = 1e-3
 batch_size = 4
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
@@ -31,19 +30,25 @@ checkpoint = torch.load(checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
 model = B7Model(player_model).to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = AdamW(
+    [
+        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
+        {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
+        {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
+        {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
+    ],
+    weight_decay=1e-4,
+)
+
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, mode="min", factor=0.5, patience=3
+)
+
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(
-    [p for p in model.parameters() if p.requires_grad],
-    lr=lr,
-    weight_decay=1e-4,
-)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode="min", factor=0.5, patience=3
-)
 if __name__ == "__main__":
     model, history = train(
         model,
@@ -64,5 +69,5 @@ if __name__ == "__main__":
         criterion,
         device=device,
         class_names=CLASS_NAMES,
-        cm_save_path=f"{save_path}confusion_matrix_b6.png",
+        cm_save_path=f"{save_path}confusion_matrix_b7.png",
     )
