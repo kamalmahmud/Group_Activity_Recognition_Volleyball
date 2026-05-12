@@ -5,13 +5,12 @@ from data.data_loader import get_data_loader
 from data.transformers import get_transform
 from models.b5_model import B5Model
 from scripts import pkl_path, videos_path, device, save_path
+from scripts.script_constants import player_temporal_checkpoint_path
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
-checkpoint_path = "/content/best_model_1.pth"
-lr = 1e-3
 batch_size = 16
 num_workers = 8
 CLASS_NAMES = list(GROUP_LABELS.keys())
@@ -27,7 +26,7 @@ train_loader, val_loader, test_loader = get_data_loader(
 )
 
 player_model = B5Model().to(device)
-checkpoint = torch.load(checkpoint_path, map_location="cpu")
+checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
