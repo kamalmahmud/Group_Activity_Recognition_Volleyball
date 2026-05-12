@@ -29,16 +29,17 @@ player_model = B5Model().to(device)
 checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
-model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
+model = B5BModel(player_model=player_model, freeze_backbone=False)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW([
         {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
         {"params": model.player_model.lstm.parameters(), "lr": 1e-4},   # pretrained player LSTM
         {"params": model.group_classifier.parameters(), "lr": 1e-3},
 ], weight_decay=1e-4)
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+model = model.to(device)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
