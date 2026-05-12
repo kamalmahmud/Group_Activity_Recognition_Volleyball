@@ -11,7 +11,7 @@ from scripts.script_constants import player_temporal_checkpoint_path
 from utils.evaluator import full_evaluation
 from utils.trainer import train
 
-batch_size = 8
+batch_size = 4
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
