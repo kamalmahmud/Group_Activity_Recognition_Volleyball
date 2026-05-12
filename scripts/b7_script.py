@@ -11,7 +11,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-batch_size = 32
+batch_size = 16
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
