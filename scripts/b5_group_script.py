@@ -30,6 +30,9 @@ checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW([
         {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
