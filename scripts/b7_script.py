@@ -68,7 +68,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        7,
+        20,
         save_path,
     )
 
