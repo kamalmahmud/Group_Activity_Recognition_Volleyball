@@ -33,8 +33,9 @@ player_model.load_state_dict(checkpoint["model_state_dict"])
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW([
-    {"params": model.player_model.parameters(), "lr": 1e-5},
-    {"params": model.group_classifier.parameters(), "lr": 1e-3},
+        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
+        {"params": model.player_model.lstm.parameters(), "lr": 1e-4},   # pretrained player LSTM
+        {"params": model.group_classifier.parameters(), "lr": 1e-3},
 ], weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
