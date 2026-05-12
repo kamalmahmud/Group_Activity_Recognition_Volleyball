@@ -11,7 +11,7 @@ from utils.trainer import train
 from models.b5_group_classifier import B5BModel
 from data import GROUP_LABELS
 
-batch_size = 8
+batch_size = 4
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 frame_transform, crop_transform = get_transform()
