@@ -11,7 +11,8 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-batch_size = 16
+colab_check_point = "/content/best_model_player.pth"
+batch_size = 8
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
@@ -26,25 +27,29 @@ train_loader, val_loader, test_loader = get_data_loader(
     num_workers=num_workers,
 )
 player_model = B5Model().to(device)
-checkpoint = torch.load(checkpoint_path, map_location="cpu")
+checkpoint = torch.load(colab_check_point, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
-model = B7Model(player_model,freeze_backbone=True).to(device)
+b7_check_point = "/content/best_model.pth"
+model = B7Model(player_model,freeze_backbone=False).to(device)
+checkpoint_b7 = torch.load(b7_check_point, map_location="cpu")
+model.load_state_dict(checkpoint_b7["model_state_dict"])
+
 criterion = nn.CrossEntropyLoss()
-# optimizer = AdamW(
-#     [
-#         {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
-#         {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
-#         {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
-#         {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
-#     ],
-#     weight_decay=1e-4,
-# )
 optimizer = AdamW(
-    [p for p in model.parameters() if p.requires_grad],
-    lr=1e-3,
+    [
+        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
+        {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
+        {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
+        {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
+    ],
     weight_decay=1e-4,
 )
+# optimizer = AdamW(
+#     [p for p in model.parameters() if p.requires_grad],
+#     lr=1e-3,
+#     weight_decay=1e-4,
+# )
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
@@ -64,7 +69,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        20,
+        7,
         save_path,
     )
 
