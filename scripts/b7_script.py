@@ -32,7 +32,15 @@ player_model.load_state_dict(checkpoint["model_state_dict"])
 b7_check_point = "/content/best_model.pth"
 model = B7Model(player_model,freeze_backbone=True).to(device)
 checkpoint_b7 = torch.load(b7_check_point, map_location="cpu")
-model.load_state_dict(checkpoint_b7["model_state_dict"])
+state_dict = checkpoint_b7["model_state_dict"]
+
+if next(iter(state_dict)).startswith("module."):
+    state_dict = {
+        k[len("module."):]: v
+        for k, v in state_dict.items()
+    }
+
+model.load_state_dict(state_dict)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(
