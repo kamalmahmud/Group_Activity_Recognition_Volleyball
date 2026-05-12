@@ -36,6 +36,7 @@ optimizer = AdamW([
         {"params": model.player_model.lstm.parameters(), "lr": 1e-4},   # pretrained player LSTM
         {"params": model.group_classifier.parameters(), "lr": 1e-3},
 ], weight_decay=1e-4)
+
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)

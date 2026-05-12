@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from torchvision import models
 
@@ -19,9 +20,9 @@ class B5Model(nn.Module):
             batch_first=True
         )
 
-        self.person_classifier = nn.Linear(hidden_size, num_classes)
+        self.person_classifier = nn.Linear(in_features + hidden_size, num_classes)
 
-    def forward(self, x, return_features=False):
+    def forward(self, x, return_features=False,return_all_steps=False):
         # [batch size, num frames, channels, height, width]
         b, t, c, h, w = x.shape
         x = x.reshape(b * t, c, h, w)
@@ -35,7 +36,12 @@ class B5Model(nn.Module):
         lstm_out, _ = self.lstm(frame_features)
         # [batch size, num frames, hidden_size]
 
-        player_features = lstm_out[:, -1, :]
+        combined_out = torch.cat((frame_features, lstm_out), dim=2)
+        # [B, T, 2048 + hidden_size]
+        if return_all_steps:
+            return combined_out
+
+        player_features = combined_out[:, -1, :]
         # [batch size, hidden_size]
 
         player_logits = self.person_classifier(player_features)
