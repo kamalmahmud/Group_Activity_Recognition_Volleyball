@@ -11,7 +11,7 @@ from utils.evaluator import full_evaluation
 from utils.trainer import train
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-batch_size = 4
+batch_size = 16
 num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
@@ -29,15 +29,20 @@ player_model = B5Model().to(device)
 checkpoint = torch.load(checkpoint_path, map_location="cpu")
 player_model.load_state_dict(checkpoint["model_state_dict"])
 
-model = B7Model(player_model).to(device)
+model = B7Model(player_model,freeze_backbone=True).to(device)
 criterion = nn.CrossEntropyLoss()
+# optimizer = AdamW(
+#     [
+#         {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
+#         {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
+#         {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
+#         {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
+#     ],
+#     weight_decay=1e-4,
+# )
 optimizer = AdamW(
-    [
-        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
-        {"params": model.player_model.lstm.parameters(), "lr": 1e-5},   # pretrained player LSTM
-        {"params": model.frame_lstm.parameters(), "lr": 1e-3},          # new frame LSTM
-        {"params": model.classifier.parameters(), "lr": 1e-3},          # new classifier
-    ],
+    [p for p in model.parameters() if p.requires_grad],
+    lr=1e-3,
     weight_decay=1e-4,
 )
 
@@ -59,7 +64,7 @@ if __name__ == "__main__":
         optimizer,
         CLASS_NAMES,
         scheduler,
-        25,
+        20,
         save_path,
     )
 
