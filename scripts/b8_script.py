@@ -30,22 +30,12 @@ base_model = model.module if isinstance(model, nn.DataParallel) else model
 
 criterion = nn.CrossEntropyLoss()
 
-optimizer = torch.optim.AdamW(
-    [
-        {"params": base_model.player_model.model.parameters(), "lr": 1e-5, "weight_decay": 1e-4},
-        {"params": base_model.player_model.lstm.parameters(), "lr": 5e-5, "weight_decay": 1e-4},
-        {"params": base_model.frame_lstm.parameters(), "lr": 1e-4, "weight_decay": 1e-4},
-        {"params": base_model.frame_projection.parameters(), "lr": 3e-4, "weight_decay": 1e-4},
-        {"params": base_model.classifier.parameters(), "lr": 3e-4, "weight_decay": 1e-4},
-    ],
-    betas=(0.9, 0.999),
-    eps=1e-8,
-)
-
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
-    T_max=20,
-    eta_min=1e-6,
+    mode="min",
+    factor=0.5,
+    patience=3
 )
 
 if __name__ == "__main__":
