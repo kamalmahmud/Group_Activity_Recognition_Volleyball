@@ -31,7 +31,7 @@ if __name__ == "__main__":
     run(
         model=model,
         mode="frame",
-        num_epochs=30,
+        num_epochs=10,
         batch_size=128,
         criterion=criterion,
         optimizer=optimizer,
