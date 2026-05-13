@@ -1,31 +1,14 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
-
 from data import GROUP_LABELS
-from data.data_loader import get_data_loader
-from data.transformers import get_transform
 from models.b6_model import B6Model
-from scripts import pkl_path, videos_path, device, save_path
-from utils.evaluator import full_evaluation
-from utils.trainer import train
+from scripts import device
+from utils.runner import run
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
-lr = 1e-3
-batch_size = 16
-num_workers = 4
+lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
-
-frame_transform, crop_transform = get_transform()
-train_loader, val_loader, test_loader = get_data_loader(
-    pkl_path=pkl_path,
-    videos_path=videos_path,
-    mode="temporal_person_clip",
-    frame_transform=frame_transform,
-    crop_transform=crop_transform,
-    batch_size=batch_size,
-    num_workers=num_workers,
-)
 
 model = B6Model(ckpt_path=checkpoint_path, num_classes=8, freeze_backbone=True).to(device)
 if torch.cuda.device_count() > 1:
@@ -43,24 +26,13 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 )
 
 if __name__ == "__main__":
-    model, history = train(
-        model,
-        train_loader,
-        val_loader,
-        test_loader,
-        criterion,
-        optimizer,
-        CLASS_NAMES,
-        scheduler,
-        25,
-        save_path,
-    )
-
-    full_evaluation(
-        model,
-        test_loader,
-        criterion,
-        device=device,
+    run(
+        model=model,
+        mode="temporal_person_clip",
+        num_epochs=20,
+        batch_size=64,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler,
         class_names=CLASS_NAMES,
-        cm_save_path=f"{save_path}confusion_matrix_b6.png",
-    )
+        cm_filename="confusion_matrix_b6.png")

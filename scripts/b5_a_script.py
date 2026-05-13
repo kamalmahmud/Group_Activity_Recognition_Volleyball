@@ -1,32 +1,15 @@
-from data import PLAYER_LABELS
-import torch.nn as nn
 import torch
+import torch.nn as nn
 from torch.optim import AdamW
-from data.data_loader import get_data_loader
-from data.transformers import get_transform
+from data import PLAYER_LABELS
 from models.b5_model import B5Model
-from scripts import pkl_path, videos_path, device, save_path
-from utils.evaluator import full_evaluation
-from utils.trainer import train
+from scripts import device
+from utils.runner import run
 
 lr = 0.0001
-batch_size = 64
-num_workers = 16
-
 CLASS_NAMES = PLAYER_LABELS.keys()
-frame_transform, crop_transform = get_transform()
-train_loader, val_loader, test_loader = get_data_loader(
-    pkl_path=pkl_path,
-    videos_path=videos_path,
-    mode="temporal_person",
-    frame_transform=frame_transform,
-    batch_size=batch_size,
-    num_workers=num_workers,
-    crop_transform=crop_transform,
-)
 
-model = B5Model(num_classes=len(CLASS_NAMES))
-model = model.to(device)
+model = B5Model(num_classes=len(CLASS_NAMES)).to(device)
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
 optimizer = AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
@@ -37,21 +20,18 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     patience=3
 )
 
-if __name__ == "__main__":
-    model, history = train(
-        model,
-        train_loader,
-        val_loader,
-        test_loader,
-        criterion,
-        optimizer,
-        CLASS_NAMES,
-        scheduler,
-        25,
-        save_path, )
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
 
-    full_evaluation(model, test_loader,
-                    criterion,
-                    device=device,
-                    class_names=CLASS_NAMES,
-                    cm_save_path=f'{save_path}confusion_matrix_b5_player.png')
+if __name__ == "__main__":
+    run(
+        model=model,
+        mode="temporal_person",
+        num_epochs=20,
+        batch_size=64,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        class_names=CLASS_NAMES,
+        cm_filename="confusion_matrix_b5_a.png")

@@ -1,36 +1,15 @@
 import torch
 import torch.nn as nn
-from data import GROUP_LABELS, get_transform, get_data_loader
+from data import GROUP_LABELS
 from models.b8_model import B8Model
-from scripts import pkl_path, videos_path, device, save_path
-from utils.evaluator import full_evaluation
-from utils.trainer import train
+from scripts import device
+from utils.runner import run
 
-batch_size = 4
-num_workers = 4
 CLASS_NAMES = list(GROUP_LABELS.keys())
-frame_transform, crop_transform = get_transform()
-train_loader, val_loader, test_loader = get_data_loader(
-    pkl_path=pkl_path,
-    videos_path=videos_path,
-    mode="temporal_person_clip",
-    frame_transform=frame_transform,
-    crop_transform=crop_transform,
-    batch_size=batch_size,
-    num_workers=num_workers,
-)
 
 model = B8Model().to(device)
-
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
-
-base_model = model.module if isinstance(model, nn.DataParallel) else model
-
-criterion = nn.CrossEntropyLoss()
-
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+criterion = nn.CrossEntropyLoss()
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
     mode="min",
@@ -38,25 +17,21 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     patience=3
 )
 
-if __name__ == "__main__":
-    model, history = train(
-        model,
-        train_loader,
-        val_loader,
-        test_loader,
-        criterion,
-        optimizer,
-        CLASS_NAMES,
-        scheduler,
-        20,
-        save_path,
-    )
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
 
-    full_evaluation(
-        model,
-        test_loader,
-        criterion,
-        device=device,
+base_model = model.module if isinstance(model, nn.DataParallel) else model
+
+
+if __name__ == "__main__":
+    run(
+        model=model,
+        mode="temporal_person_clip",
+        num_epochs=20,
+        batch_size=4,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=scheduler,
         class_names=CLASS_NAMES,
-        cm_save_path=f"{save_path}confusion_matrix_b8.png",
-    )
+        cm_filename="confusion_matrix_b8.png")
