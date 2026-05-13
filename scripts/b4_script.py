@@ -38,6 +38,12 @@ checkpoint = torch.load(checkpoint_path, map_location=device)
 
 model.load_state_dict(checkpoint["model_state_dict"])
 optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
 
 if __name__ == "__main__":
     model, history = train(
@@ -48,6 +54,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         10,
         save_path, )
 

@@ -28,11 +28,16 @@ train_loader, val_loader, test_loader = get_data_loader(
     crop_transform=crop_transform,
 )
 
-# ── Model / Loss / Optimizer ─────────────────────────────────────────────
 model = B3BModel(ckpt_path=checkpoint_path, num_classes=8)
 model = model.to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(model.classifier.parameters(), lr=lr)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
+)
 
 if __name__ == "__main__":
     model, history = train(
@@ -43,6 +48,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         40,
         save_path, )
 

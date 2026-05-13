@@ -30,27 +30,17 @@ train_loader, val_loader, test_loader = get_data_loader(
     crop_transform=crop_transform,
 )
 
-# ── Model / Loss / Optimizer ─────────────────────────────────────────────
 model = B3AModel(num_classes=9).to(device)
 checkpoint = torch.load(checkpoint_path, map_location=device)
 model.load_state_dict(checkpoint["model_state_dict"])
 model = model.to(device)
-print("Loaded checkpoint successfully")
-print("Checkpoint epoch:", checkpoint.get("epoch"))
-print("Val acc:", checkpoint.get("val_acc"))
-print("Val loss:", checkpoint.get("val_loss"))
-print("Model device:", next(model.parameters()).device)
-# Unfreeze only layer4 and fc
+
 for name, param in model.model.named_parameters():
     if name.startswith("layer4") or name.startswith("fc"):
         param.requires_grad = True
     else:
         param.requires_grad = False
 
-# Check trainable layers
-for name, param in model.named_parameters():
-    if param.requires_grad:
-        print("Trainable:", name)
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
@@ -60,6 +50,12 @@ optimizer = AdamW(
         {"params": model.model.fc.parameters(), "lr": 2e-5},
     ],
     weight_decay=1e-4
+)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="min",
+    factor=0.5,
+    patience=3
 )
 
 if __name__ == "__main__":
@@ -71,6 +67,7 @@ if __name__ == "__main__":
         criterion,
         optimizer,
         CLASS_NAMES,
+        scheduler,
         5,
         save_path, )
     best_stage2_path = "/kaggle/working/best_model.pth"
