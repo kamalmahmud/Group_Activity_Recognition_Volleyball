@@ -4,6 +4,7 @@ from .constants import GROUP_LABELS, PLAYER_LABELS
 
 
 class DatasetIndexBuildersMixin:
+    # Builds dataset indices for all modes.
     def _build_frame_index(
             self,
             video_ids: Sequence[str],
@@ -11,6 +12,7 @@ class DatasetIndexBuildersMixin:
         samples = []
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            # In this dataset clip_id corresponds to the key frame id
             key_frame_id = int(clip_id)
             boxes = self._boxes_for_frame(clip_dict, key_frame_id)
 
@@ -34,6 +36,9 @@ class DatasetIndexBuildersMixin:
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
             frame_id = int(clip_id)
+            # Use neighboring frames to increase samples for non-standing classes
+            # Standing samples are kept only from the key frame to reduce imbalance
+            # This sampling strategy can be adjusted if a better method is found
 
             for offset in [-1, 0, 1]:
                 current_frame_id = frame_id + offset

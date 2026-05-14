@@ -56,6 +56,7 @@ class DatasetGettersMixin:
             crop = self._apply_crop_transform(crop)
             right_crops.append(crop)
 
+        # Create a dummy crop used for padding missing players
         if len(left_crops) > 0:
             zero_crop = torch.zeros_like(left_crops[0])
         elif len(right_crops) > 0:
@@ -63,6 +64,7 @@ class DatasetGettersMixin:
         else:
             zero_crop = torch.zeros(3, 224, 224)
 
+        # Pad both sides so every sample has exactly 12 player crops
         while len(left_crops) < 6:
             left_crops.append(zero_crop.clone())
 
@@ -117,11 +119,6 @@ class DatasetGettersMixin:
 
         frames = torch.stack(crops, dim=0)
 
-        if label_name is None:
-            raise ValueError(
-                f"Could not find target label for video={video_id}, clip={clip_id}"
-            )
-
         label = torch.tensor(PLAYER_LABELS[label_name], dtype=torch.long)
 
         return frames, label
@@ -161,7 +158,7 @@ class DatasetGettersMixin:
         frames = torch.stack(frames, dim=0)
         masks = torch.stack(masks, dim=0)
 
-        # change to [12, T, C, H, W]
+        # change to [players, time, channels, height, width]
         frames = frames.permute(1, 0, 2, 3, 4)
         masks = masks.permute(1, 0)
 
