@@ -13,11 +13,7 @@ player_model = B5Model().to(device)
 
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW([
-        {"params": model.player_model.model.parameters(), "lr": 1e-5},  # pretrained ResNet50
-        {"params": model.player_model.lstm.parameters(), "lr": 1e-4},   # pretrained player LSTM
-        {"params": model.group_classifier.parameters(), "lr": 1e-3},
-], weight_decay=1e-4)
+optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
