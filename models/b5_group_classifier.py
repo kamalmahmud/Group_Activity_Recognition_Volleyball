@@ -4,7 +4,7 @@ from models import B5Model
 
 
 class B5BModel(nn.Module):
-    def __init__(self, player_model: B5Model, hidden_size=512, num_classes=8, freeze_backbone=False):
+    def __init__(self, player_model: B5Model, hidden_size=1024, num_classes=8, freeze_backbone=False):
         super(B5BModel, self).__init__()
         self.freeze_backbone = freeze_backbone
         self.player_model = player_model
@@ -14,10 +14,10 @@ class B5BModel(nn.Module):
                 param.requires_grad = False
 
         self.group_classifier = nn.Sequential(
-            nn.Linear(hidden_size, 128),
+            nn.Linear(hidden_size+2048, 512),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(128, num_classes)
+            nn.Linear(512, num_classes)
         )
 
     def forward(self, x, mask=None):

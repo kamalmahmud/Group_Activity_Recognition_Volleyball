@@ -5,14 +5,11 @@ from data import GROUP_LABELS
 from models.b5_group_classifier import B5BModel
 from models.b5_model import B5Model
 from scripts import device
-from scripts.script_constants import player_temporal_checkpoint_path
 from utils.runner import run
 
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
 player_model = B5Model().to(device)
-checkpoint = torch.load(player_temporal_checkpoint_path, map_location="cpu")
-player_model.load_state_dict(checkpoint["model_state_dict"])
 
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
 criterion = nn.CrossEntropyLoss()
@@ -37,7 +34,7 @@ if __name__ == "__main__":
         model=model,
         mode="temporal_person_clip",
         num_epochs=20,
-        batch_size=4,
+        batch_size=8,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,

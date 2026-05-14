@@ -4,9 +4,8 @@ from torchvision import models
 
 
 class B5Model(nn.Module):
-    def __init__(self, num_classes=9, hidden_size=512, num_layers=1):
-        # resnet50 and lstm for player classes then take last time step for all 12 players max pool then
-        # classify over 8 group classes
+    def __init__(self, num_classes=9, hidden_size=1024, num_layers=1):
+        # resnet50 and lstm for player classes then take last time step for all 12 players
         super().__init__()
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
@@ -20,7 +19,13 @@ class B5Model(nn.Module):
             batch_first=True
         )
 
-        self.person_classifier = nn.Linear(in_features + hidden_size, num_classes)
+        self.person_classifier = nn.Sequential(
+            nn.Linear(in_features=in_features + hidden_size, out_features=512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(512, num_classes)
+        )
 
     def forward(self, x, return_features=False,return_all_steps=False):
         # [batch size, num frames, channels, height, width]
@@ -42,7 +47,7 @@ class B5Model(nn.Module):
             return combined_out
 
         player_features = combined_out[:, -1, :]
-        # [batch size, hidden_size]
+        # [batch size, 2048 + hidden_size]
 
         player_logits = self.person_classifier(player_features)
         # [B, num_person_classes]
