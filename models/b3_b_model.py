@@ -27,25 +27,25 @@ class B3BModel(nn.Module):
         )
 
     def forward(self, x):
-        # x shape: [batch_size, 12, C, H, W]
+        # x shape: [batch_size, 12, c, h, w]
 
-        B, N, C, H, W = x.shape
+        b, n, c, h, w = x.shape
 
         # detect zero-padded crops
         valid_mask = x.flatten(2).abs().sum(dim=2) > 0
-        # shape: [B, 12]
+        # shape: [b, 12]
 
-        x = x.reshape(B * N, C, H, W)
+        x = x.reshape(b * n, c, h, w)
 
         with torch.no_grad():
             features = self.feature_extractor(x)
-            # shape: [B * 12, 2048]
+            # shape: [b * 12, 2048]
 
-        features = features.reshape(B, N, 2048)
-        # shape: [B, 12, 2048]
+        features = features.reshape(b, n, 2048)
+        # shape: [b, 12, 2048]
 
         valid_mask = valid_mask.unsqueeze(-1)
-        # shape: [B, 12, 1]
+        # shape: [b, 12, 1]
 
         # ignore padded crops during max pooling
         mask_value = torch.finfo(features.dtype).min
@@ -77,9 +77,9 @@ class B3BModel(nn.Module):
         )
 
         pooled = torch.cat([left_pooled, right_pooled], dim=1)
-        # shape: [B, 4096]
+        # shape: [b, 4096]
 
         output = self.classifier(pooled)
-        # shape: [B, 8]
+        # shape: [b, 8]
 
         return output

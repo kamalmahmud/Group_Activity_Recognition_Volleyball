@@ -16,12 +16,13 @@ class B5Model(nn.Module):
             input_size=in_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
-            batch_first=True
+            batch_first=True,
+            bidirectional=True
         )
-
+        self.fusion_dim = in_features + hidden_size * 2  # 2048 + 2048
         self.person_classifier = nn.Sequential(
-            nn.Linear(in_features=in_features + hidden_size, out_features=512),
-            nn.BatchNorm1d(512),
+            nn.LayerNorm(self.fusion_dim ),
+            nn.Linear(self.fusion_dim , 512),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(512, num_classes)
@@ -39,14 +40,14 @@ class B5Model(nn.Module):
         # [batch size, num frames, 2048]
 
         lstm_out, _ = self.lstm(frame_features)
-        # [batch size, num frames, hidden_size]
+        # [batch size, num frames, hidden_size * 2]
 
         combined_out = torch.cat((frame_features, lstm_out), dim=2)
         # [B, T, 2048 + hidden_size]
         if return_all_steps:
             return combined_out
 
-        player_features = combined_out[:, -1, :]
+        player_features,_ = combined_out.max(dim=1)
         # [batch size, 2048 + hidden_size]
 
         player_logits = self.person_classifier(player_features)

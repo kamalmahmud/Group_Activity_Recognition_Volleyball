@@ -8,8 +8,10 @@ class B3AModel(nn.Module):
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
         in_features = self.model.fc.in_features
         self.model.fc = nn.Sequential(
-            nn.Dropout(p=0.2),
-            nn.Linear(in_features, num_classes)
+            nn.Linear(in_features, 512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, num_classes),
         )
 
     def forward(self, x):

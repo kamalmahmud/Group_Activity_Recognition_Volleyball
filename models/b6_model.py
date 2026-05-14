@@ -10,8 +10,6 @@ class B6Model(nn.Module):
         super().__init__()
         self.freeze_backbone = freeze_backbone
         b5 = B5Model()
-        checkpoint = torch.load(ckpt_path, map_location="cpu")
-        b5.load_state_dict(checkpoint["model_state_dict"])
 
         self.feature_extractor = b5.model
         if self.freeze_backbone:
