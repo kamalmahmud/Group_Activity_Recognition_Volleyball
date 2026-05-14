@@ -34,7 +34,7 @@ if __name__ == "__main__":
         model=model,
         mode="temporal_person_clip",
         num_epochs=20,
-        batch_size=8,
+        batch_size=4,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
