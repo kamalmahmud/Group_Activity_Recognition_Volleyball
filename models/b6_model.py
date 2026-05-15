@@ -62,12 +62,12 @@ class B6Model(nn.Module):
             nn.Linear(1024, num_classes),
         )
 
-    def forward(self, x, valid_mask=None):
+    def forward(self, x,mask=None):
        # x shape: [B, T, N, C, H, W]
         b, t, n, c, h, w = x.shape
 
-        if valid_mask is None:
-            valid_mask = x.flatten(3).abs().sum(dim=3) > 0
+        if mask is None:
+            mask = x.flatten(3).abs().sum(dim=3) > 0
             # [B, T, N]
 
         x = x.reshape(b * t * n, c, h, w)
@@ -80,17 +80,17 @@ class B6Model(nn.Module):
         features = features.reshape(b, t, n, -1)
         # [B, T, N, 2048]
 
-        valid_mask = valid_mask.unsqueeze(-1)
+        mask = mask.unsqueeze(-1)
         # [B, T, N, 1]
 
         # Ignore padded crops during max pooling
         mask_value = torch.finfo(features.dtype).min
-        features = features.masked_fill(~valid_mask, mask_value)
+        features = features.masked_fill(~mask, mask_value)
 
         frame_features = torch.max(features, dim=2).values
         # [B, T, 2048]
 
-        any_valid = valid_mask.any(dim=2)
+        any_valid = mask.any(dim=2)
         # [B, T, 1]
 
         frame_features = torch.where(
