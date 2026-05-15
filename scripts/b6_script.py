@@ -11,10 +11,6 @@ lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
 model = B6Model(ckpt_path=checkpoint_path, num_classes=8).to(device)
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
-
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(
     [p for p in model.parameters() if p.requires_grad],
@@ -24,6 +20,11 @@ optimizer = AdamW(
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
 )
+
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+
 
 if __name__ == "__main__":
     run(
