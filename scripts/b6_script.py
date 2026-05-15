@@ -6,7 +6,7 @@ from models.b6_model import B6Model
 from scripts import device
 from utils.runner import run
 
-checkpoint_path = "/kaggle/input/models/kamalmahmuod/b3-player/pytorch/default/1"
+checkpoint_path = "/kaggle/input/models/kamalmahmuod/b3-player/pytorch/default/1/best_model_b3_a.pth"
 lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
