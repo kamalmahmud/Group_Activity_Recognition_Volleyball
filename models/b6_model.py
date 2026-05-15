@@ -1,60 +1,92 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
-from models.b5_model import B5Model
+from models.b3_a_model import B3AModel
 
 
 class B6Model(nn.Module):
-    def __init__(self, ckpt_path: str, num_classes: int = 8, hidden_size: int = 512, num_layers: int = 1,
-                 freeze_backbone: bool = False):
+    def __init__(
+        self,
+        ckpt_path,
+        num_classes=8,
+        num_person_classes=9,
+        cnn_feature_size=2048,
+        lstm_hidden_size=2000,
+        lstm_num_layers=1,
+        dropout=0.3,
+    ):
         super().__init__()
-        self.freeze_backbone = freeze_backbone
-        b5 = B5Model()
 
-        self.feature_extractor = b5.model
-        if self.freeze_backbone:
-            for param in self.feature_extractor.parameters():
-                param.requires_grad = False
+        # Load B3A: ResNet50 trained on 9 person actions
+        b3a_model = B3AModel(num_classes=num_person_classes)
+        checkpoint = torch.load(ckpt_path, map_location="cpu")
+        b3a_model.load_state_dict(checkpoint["model_state_dict"])
+
+        self.feature_extractor = b3a_model.model
+
+        self.feature_extractor.fc = nn.Identity()
+
+        for param in self.feature_extractor.parameters():
+            param.requires_grad = False
 
         self.lstm = nn.LSTM(
-            input_size=2048,
-            hidden_size=hidden_size,
-            num_layers=num_layers,
-            batch_first=True
+            input_size=cnn_feature_size,       # 2048
+            hidden_size=lstm_hidden_size,
+            num_layers=lstm_num_layers,
+            batch_first=True,
         )
+
         self.classifier = nn.Sequential(
-            nn.Linear(in_features=hidden_size, out_features=256),
+            nn.Linear(lstm_hidden_size, 1024),
             nn.ReLU(),
-            nn.Dropout(p=0.5),
-            nn.Linear(in_features=256, out_features=num_classes),
+            nn.Dropout(dropout),
+            nn.Linear(1024, num_classes),
         )
 
-    def forward(self, x: torch.Tensor, mask=None) -> torch.Tensor:
-        #   b,n,t,c,h,w
-        b, n, t, c, h, w = x.shape
-        # reshape to extract features
-        x = x.reshape(b * n * t, c, h, w)
+    def forward(self, x, valid_mask=None):
+       # x shape: [B, T, N, C, H, W]
+        b, t, n, c, h, w = x.shape
 
-        if self.freeze_backbone:
+        if valid_mask is None:
+            valid_mask = x.flatten(3).abs().sum(dim=3) > 0
+            # [B, T, N]
+
+        x = x.reshape(b * t * n, c, h, w)
+
+        with torch.no_grad():
             self.feature_extractor.eval()
-            with torch.no_grad():
-                features = self.feature_extractor(x)
-        else:
             features = self.feature_extractor(x)
-        # b,n,t,2048
-        features = features.reshape(b, n, t, -1)
+            # [B*T*N, 2048]
 
-        if mask is not None:
-            mask = mask.to(device=features.device, dtype=torch.bool)
-            neg_val = torch.finfo(features.dtype).min
-            features = features.masked_fill(~mask.unsqueeze(-1), neg_val)
+        features = features.reshape(b, t, n, -1)
+        # [B, T, N, 2048]
 
-        # max pooling over players -> b,t,2048
-        frame_feats = features.max(dim=1).values
+        valid_mask = valid_mask.unsqueeze(-1)
+        # [B, T, N, 1]
 
-        lstm_out, _ = self.lstm(frame_feats)  # b,t,hidden_size
+        # Ignore padded crops during max pooling
+        mask_value = torch.finfo(features.dtype).min
+        features = features.masked_fill(~valid_mask, mask_value)
 
-        output = lstm_out[:, -1, :]  # b,hidden_size
-        output = self.classifier(output)  # b, num_classes
+        frame_features = torch.max(features, dim=2).values
+        # [B, T, 2048]
 
-        return output
+        any_valid = valid_mask.any(dim=2)
+        # [B, T, 1]
+
+        frame_features = torch.where(
+            any_valid,
+            frame_features,
+            torch.zeros_like(frame_features),
+        )
+
+        lstm_out, _ = self.lstm(frame_features)
+        # [B, T, lstm_hidden_size]
+
+        clip_features = lstm_out[:, -1, :]
+        # [B, lstm_hidden_size]
+
+        logits = self.classifier(clip_features)
+        # [B, 8]
+
+        return logits

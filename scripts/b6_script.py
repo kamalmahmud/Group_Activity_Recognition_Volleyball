@@ -6,11 +6,11 @@ from models.b6_model import B6Model
 from scripts import device
 from utils.runner import run
 
-checkpoint_path = "/kaggle/input/models/kamalalqedra/temporal-player-action/pytorch/default/1/best_model.pth"
+checkpoint_path = "/kaggle/input/models/kamalmahmuod/b3-player/pytorch/default/1"
 lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
-model = B6Model(ckpt_path=checkpoint_path, num_classes=8, freeze_backbone=True).to(device)
+model = B6Model(ckpt_path=checkpoint_path, num_classes=8).to(device)
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         model=model,
         mode="temporal_person_clip",
         num_epochs=20,
-        batch_size=64,
+        batch_size=16,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
