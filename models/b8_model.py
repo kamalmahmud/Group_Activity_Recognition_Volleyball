@@ -58,6 +58,12 @@ class B8Model(nn.Module):
         right_group = player_out[:,6:,:,:].max(dim=1).values
         # both: [B, T, 4096]
 
+        left_any_valid = mask[:, :6, :].any(dim=1).unsqueeze(-1)  # [B, T, 1]
+        right_any_valid = mask[:, 6:, :].any(dim=1).unsqueeze(-1)  # [B, T, 1]
+
+        left_group = torch.where(left_any_valid, left_group, torch.zeros_like(left_group))
+        right_group = torch.where(right_any_valid, right_group, torch.zeros_like(right_group))
+
         left_group  = self.left_projection(left_group)            # [B, T, 1024]
         right_group = self.right_projection(right_group)           # [B, T, 1024]
 
@@ -65,7 +71,7 @@ class B8Model(nn.Module):
 
         lstm_out,_ = self.frame_lstm(frame_feats) # [B, T, 1024]
 
-        out = self.classifier(lstm_out[:,4,:])
+        out = self.classifier(lstm_out[:, -1, :])
         # [B, num_classes]
         
         return out

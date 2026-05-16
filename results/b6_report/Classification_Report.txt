@@ -14,3 +14,20 @@ Classification Report
     accuracy                           0.79      1337
    macro avg       0.76      0.76      0.75      1337
 weighted avg       0.79      0.79      0.79      1337
+
+Classification Report
+────────────────────────────────────────────────────────────
+              precision    recall  f1-score   support
+
+      l-pass       0.97      0.88      0.92       226
+      r-pass       0.91      0.87      0.89       210
+     l-spike       0.94      0.93      0.93       179
+     r_spike       0.92      0.87      0.89       173
+       l_set       0.84      0.92      0.88       168
+       r_set       0.84      0.90      0.87       192
+  l_winpoint       0.87      0.97      0.92       102
+  r_winpoint       0.92      0.90      0.91        87
+
+    accuracy                           0.90      1337
+   macro avg       0.90      0.90      0.90      1337
+weighted avg       0.90      0.90      0.90      1337

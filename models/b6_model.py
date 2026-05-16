@@ -55,15 +55,15 @@ class B6Model(nn.Module):
             batch_first=True,
         )
 
-        self.classifier = nn.Sequential(
-            nn.Linear(lstm_hidden_size, 1024),
+        self.classifier = self.classifier = nn.Sequential(
+            nn.Linear(in_features=lstm_hidden_size, out_features=256),
             nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(1024, num_classes),
+            nn.Dropout(p=0.5),
+            nn.Linear(in_features=256, out_features=num_classes),
         )
 
     def forward(self, x,mask=None):
-       # x shape: [B, t, N, C, H, W]
+       # x shape: [B, N, T, C, H, W]
         b, n, t, c, h, w = x.shape
 
         if mask is None:
