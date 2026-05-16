@@ -63,35 +63,35 @@ class B6Model(nn.Module):
         )
 
     def forward(self, x,mask=None):
-       # x shape: [B, T, N, C, H, W]
-        b, t, n, c, h, w = x.shape
+       # x shape: [B, t, N, C, H, W]
+        b, n, t, c, h, w = x.shape
 
         if mask is None:
             mask = x.flatten(3).abs().sum(dim=3) > 0
-            # [B, T, N]
+            # [B, t, N]
 
-        x = x.reshape(b * t * n, c, h, w)
+        x = x.reshape(b * n * t, c, h, w)
 
         with torch.no_grad():
             self.feature_extractor.eval()
             features = self.feature_extractor(x)
-            # [B*T*N, 2048]
+            # [B*t*N, 2048]
 
-        features = features.reshape(b, t, n, -1)
-        # [B, T, N, 2048]
+        features = features.reshape(b, n, t, -1)
+        # [B, N, T, 2048]
 
         mask = mask.unsqueeze(-1)
-        # [B, T, N, 1]
+        # [B, N, T, 1]
 
         # Ignore padded crops during max pooling
         mask_value = torch.finfo(features.dtype).min
         features = features.masked_fill(~mask, mask_value)
 
-        frame_features = torch.max(features, dim=2).values
-        # [B, T, 2048]
+        frame_features = torch.max(features, dim=1).values
+        # [B, t, 2048]
 
-        any_valid = mask.any(dim=2)
-        # [B, T, 1]
+        any_valid = mask.any(dim=1)
+        # [B, t, 1]
 
         frame_features = torch.where(
             any_valid,
@@ -100,7 +100,7 @@ class B6Model(nn.Module):
         )
 
         lstm_out, _ = self.lstm(frame_features)
-        # [B, T, lstm_hidden_size]
+        # [B, t, lstm_hidden_size]
 
         clip_features = lstm_out[:, -1, :]
         # [B, lstm_hidden_size]
