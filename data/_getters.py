@@ -132,7 +132,9 @@ class DatasetGettersMixin:
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
             crops = []
-            for box in frame["boxes"]:
+
+            boxes = sorted(frame["boxes"], key=lambda x: x.box[0])
+            for box in boxes:
                 crop = image.crop(box)
                 crop = self._apply_crop_transform(crop)
                 crops.append(crop)
