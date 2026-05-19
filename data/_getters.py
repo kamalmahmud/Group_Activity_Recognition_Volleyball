@@ -133,23 +133,27 @@ class DatasetGettersMixin:
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
 
-            # x-sorted grouping: left-to-right by bbox x1
-            boxes = sorted(frame["boxes"], key=lambda box: box[0])
+            players = frame["players"]
 
-            # keep only 12 players max
-            boxes = boxes[:max_players]
+            # Sort players left-to-right by bbox x1
+            players = sorted(players, key=lambda player: player["bbox"][0])
+
+            # Keep only 12 players
+            players = players[:max_players]
 
             crops = []
             mask = torch.zeros(max_players, dtype=torch.bool)
 
-            for i, box in enumerate(boxes):
-                crop = image.crop(box)
+            for i, player in enumerate(players):
+                bbox = player["bbox"]
+
+                crop = image.crop(bbox)
                 crop = self._apply_crop_transform(crop)
 
                 crops.append(crop)
                 mask[i] = True
 
-            # simple padding for missing players
+            # Pad missing players with zero crops
             zero_crop = torch.zeros(3, 224, 224)
 
             while len(crops) < max_players:
