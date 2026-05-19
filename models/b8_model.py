@@ -4,25 +4,25 @@ from torchvision import models
 from torchvision.models import ResNet50_Weights
 
 class B8Model(nn.Module):
-    def __init__(self,num_classes=8,hidden_size=1024):
+    def __init__(self,num_classes=8,player_hidden_size=2048,frame_hidden_size=1024):
         super(B8Model, self).__init__()
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
 
-        self.player_lstm = nn.LSTM(input_size=2048, hidden_size=hidden_size, num_layers=1, batch_first=True)
+        self.player_lstm = nn.LSTM(input_size=2048, hidden_size=player_hidden_size, num_layers=1, batch_first=True)
 
-        self.player_feat_dim = 2048 + hidden_size
+        self.player_feat_dim = 2048 + player_hidden_size
 
         self.frame_lstm = nn.LSTM(
             input_size=self.player_feat_dim * 2,
-            hidden_size=hidden_size,
+            hidden_size=frame_hidden_size,
             num_layers=1,
             batch_first=True,
         )
 
         self.classifier = nn.Sequential(
-            nn.LayerNorm(hidden_size),
-            nn.Linear(hidden_size, 512),
+            nn.LayerNorm(frame_hidden_size),
+            nn.Linear(frame_hidden_size, 512),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(512, 256),

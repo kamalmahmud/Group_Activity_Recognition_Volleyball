@@ -133,34 +133,27 @@ class DatasetGettersMixin:
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
 
-            crops = [None] * max_players
+            # x-sorted grouping: left-to-right by bbox x1
+            boxes = sorted(frame["boxes"], key=lambda box: box[0])
+
+            # keep only 12 players max
+            boxes = boxes[:max_players]
+
+            crops = []
             mask = torch.zeros(max_players, dtype=torch.bool)
 
-            for player in frame["players"]:
-                player_id = int(player["player_id"])
-
-                # Keep only valid player slots 0..11
-                if player_id < 0 or player_id >= max_players:
-                    continue
-
-                crop = image.crop(player["bbox"])
+            for i, box in enumerate(boxes):
+                crop = image.crop(box)
                 crop = self._apply_crop_transform(crop)
 
-                crops[player_id] = crop
-                mask[player_id] = True
+                crops.append(crop)
+                mask[i] = True
 
-            # Padding crop
-            first_real_crop = next((crop for crop in crops if crop is not None), None)
+            # simple padding for missing players
+            zero_crop = torch.zeros(3, 224, 224)
 
-            if first_real_crop is not None:
-                zero_crop = torch.zeros_like(first_real_crop)
-            else:
-                zero_crop = torch.zeros(3, 224, 224)
-
-            crops = [
-                crop if crop is not None else zero_crop.clone()
-                for crop in crops
-            ]
+            while len(crops) < max_players:
+                crops.append(zero_crop.clone())
 
             crops = torch.stack(crops, dim=0)
 
@@ -170,10 +163,10 @@ class DatasetGettersMixin:
         frames = torch.stack(frames, dim=0)
         masks = torch.stack(masks, dim=0)
 
-        # [T, N, C, H, W] -> [N, T, C, H, W]
+        # [T, 12, C, H, W] -> [12, T, C, H, W]
         frames = frames.permute(1, 0, 2, 3, 4)
 
-        # [T, N] -> [N, T]
+        # [T, 12] -> [12, T]
         masks = masks.permute(1, 0)
 
         target = torch.tensor(label, dtype=torch.long)

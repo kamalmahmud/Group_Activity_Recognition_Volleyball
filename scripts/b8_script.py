@@ -8,21 +8,21 @@ from utils.runner import run
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
 model = B8Model().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-3)
+
 criterion = nn.CrossEntropyLoss()
+
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
     mode="min",
     factor=0.5,
     patience=3
 )
-
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
-
-base_model = model.module if isinstance(model, nn.DataParallel) else model
-
 
 if __name__ == "__main__":
     run(

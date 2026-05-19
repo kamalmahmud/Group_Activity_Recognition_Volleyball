@@ -154,17 +154,4 @@ def train(
 
     model.load_state_dict(checkpoint["model_state_dict"])
 
-    print("\n" + "═" * 60)
-    print("TEST SET EVALUATION")
-    print("═" * 60)
-
-    evaluate(
-        model,
-        test_loader,
-        criterion,
-        device,
-        class_names=class_names,
-        print_report=True,
-    )
-
     return model, history
