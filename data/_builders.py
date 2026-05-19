@@ -84,26 +84,6 @@ class DatasetIndexBuildersMixin:
 
         return samples
 
-    def _build_temporal_person_clip_index(self, video_ids):
-        samples = []
-
-        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
-            frames = []
-
-            for frame_id in sorted(clip_dict["frame_boxes_dct"]):
-                boxes = self._boxes_for_frame(clip_dict, frame_id)
-
-                frames.append({
-                    "frame_id": frame_id,
-                    "boxes": [tuple(int(v) for v in box.box) for box in boxes],
-                    "frame_path": self._img_path(video_id, clip_id, frame_id),
-                })
-
-            label = GROUP_LABELS[clip_dict["category"]]
-            samples.append((frames, label))
-
-        return samples
-
     def _build_temporal_clip_index(
             self,
             video_ids: Sequence[str],
@@ -148,5 +128,34 @@ class DatasetIndexBuildersMixin:
                         "box_infos": box_infos,
                     }
                 )
+
+        return samples
+
+    def _build_temporal_person_clip_index(self, video_ids):
+        samples = []
+
+        for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
+            frames = []
+
+            for frame_id in sorted(clip_dict["frame_boxes_dct"]):
+                raw_boxes = list(clip_dict["frame_boxes_dct"].get(int(frame_id), []))
+                boxes = self._filter_boxes(raw_boxes)
+
+                frame_players = []
+
+                for box in boxes:
+                    frame_players.append({
+                        "player_id": int(box.player_ID),
+                        "bbox": tuple(int(v) for v in box.box),
+                    })
+
+                frames.append({
+                    "frame_id": frame_id,
+                    "players": frame_players,
+                    "frame_path": self._img_path(video_id, clip_id, frame_id),
+                })
+
+            label = GROUP_LABELS[clip_dict["category"]]
+            samples.append((frames, label))
 
         return samples

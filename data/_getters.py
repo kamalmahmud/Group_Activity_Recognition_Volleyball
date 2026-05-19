@@ -126,33 +126,43 @@ class DatasetGettersMixin:
     def _get_temporal_person_clip(self, item):
         list_of_frames, label = item
         max_players = 12
+
         frames = []
         masks = []
 
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
-            crops = []
 
-            boxes = sorted(frame["boxes"], key=lambda x: x[0])
-            for box in boxes:
-                crop = image.crop(box)
-                crop = self._apply_crop_transform(crop)
-                crops.append(crop)
-
-            num_players = len(crops)
-
+            crops = [None] * max_players
             mask = torch.zeros(max_players, dtype=torch.bool)
-            mask[:num_players] = True
 
-            if num_players > 0:
-                crops = torch.stack(crops, dim=0)
+            for player in frame["players"]:
+                player_id = int(player["player_id"])
 
-                if num_players < max_players:
-                    # dummy padding, not real player
-                    pad = torch.zeros_like(crops[:1]).repeat(
-                        max_players - num_players, 1, 1, 1
-                    )
-                    crops = torch.cat([crops, pad], dim=0)
+                # Keep only valid player slots 0..11
+                if player_id < 0 or player_id >= max_players:
+                    continue
+
+                crop = image.crop(player["bbox"])
+                crop = self._apply_crop_transform(crop)
+
+                crops[player_id] = crop
+                mask[player_id] = True
+
+            # Padding crop
+            first_real_crop = next((crop for crop in crops if crop is not None), None)
+
+            if first_real_crop is not None:
+                zero_crop = torch.zeros_like(first_real_crop)
+            else:
+                zero_crop = torch.zeros(3, 224, 224)
+
+            crops = [
+                crop if crop is not None else zero_crop.clone()
+                for crop in crops
+            ]
+
+            crops = torch.stack(crops, dim=0)
 
             frames.append(crops)
             masks.append(mask)
@@ -160,9 +170,12 @@ class DatasetGettersMixin:
         frames = torch.stack(frames, dim=0)
         masks = torch.stack(masks, dim=0)
 
-        # change to [players, time, channels, height, width]
+        # [T, N, C, H, W] -> [N, T, C, H, W]
         frames = frames.permute(1, 0, 2, 3, 4)
+
+        # [T, N] -> [N, T]
         masks = masks.permute(1, 0)
 
         target = torch.tensor(label, dtype=torch.long)
+
         return frames, target, masks

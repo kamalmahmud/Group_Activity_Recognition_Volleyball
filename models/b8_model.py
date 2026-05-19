@@ -11,8 +11,10 @@ class B8Model(nn.Module):
 
         self.player_lstm = nn.LSTM(input_size=2048, hidden_size=hidden_size, num_layers=1, batch_first=True)
 
+        self.player_feat_dim = 2048 + hidden_size
+
         self.frame_lstm = nn.LSTM(
-            input_size=hidden_size * 2,
+            input_size=self.player_feat_dim * 2,
             hidden_size=hidden_size,
             num_layers=1,
             batch_first=True,
@@ -29,42 +31,59 @@ class B8Model(nn.Module):
             nn.Linear(256, num_classes),
         )
 
+    def _masked_group_max(self, feats, mask):
+        """
+        feats: [B, S, T, D]
+        mask:  [B, S, T]
+        returns: [B, T, D]
+        """
+        mask = mask.unsqueeze(-1)  # [B, S, T, 1]
+        neg_value = torch.finfo(feats.dtype).min
+
+        feats = feats.masked_fill(~mask, neg_value)
+        pooled = feats.max(dim=1).values  # [B, T, D]
+
+        # If a whole side is missing at a timestep, replace -inf-like values with zeros
+        valid_any = mask.any(dim=1)  # [B, T, 1]
+        pooled = torch.where(valid_any, pooled, torch.zeros_like(pooled))
+
+        return pooled
+
     def forward(self,x,mask=None):
         # batch, players, time, channels, height, width
         b,n,t,c,h,w = x.shape
+
+        if mask is None:
+            # Detect zero-padded crops if mask was not provided
+            mask = x.flatten(3).abs().sum(dim=3) > 0  # [B, N, T]
+
+        mask = mask.to(device=x.device, dtype=torch.bool)
+
         x = x.reshape(b*n*t,c,h,w)
 
-        player_feats = self.feature_extractor(x)
-        player_feats = player_feats.flatten(1)# [b*n*t,2048]
+        cnn_feats = self.feature_extractor(x).flatten(1)
 
-        player_seq = player_feats.reshape(b * n, t, -1) # [B*N, T, 2048]
+        cnn_seq = cnn_feats.reshape(b * n, t, 2048)  # [B*N, T, 2048]
 
-        player_lstm_out, _ = self.player_lstm(player_seq) # [b*n, t, hidden_size]
+        player_lstm_out, _ = self.player_lstm(cnn_seq)  # [B*N, T, H]
 
-        players = player_lstm_out.reshape(b, n, t, -1) # [b, n, t, hidden_size]
+        # Paper-style concat: x_tk + h_tk
+        player_seq = torch.cat([cnn_seq, player_lstm_out], dim=2)
+        player_seq = player_seq.reshape(b, n, t, self.player_feat_dim)
 
-        if mask is not None:
-            # mask: [b, n, t], True = real player, False = padded player
-            mask = mask.to(players.device).bool()
+        left_feats = player_seq[:, :6]
+        right_feats = player_seq[:, 6:]
 
-            left_mask = mask[:, :6, :].unsqueeze(-1)
-            right_mask = mask[:, 6:, :].unsqueeze(-1)
+        left_mask = mask[:, :6]
+        right_mask = mask[:, 6:]
 
-            neg_value = -torch.finfo(players.dtype).max
+        left_pooled = self._masked_group_max(left_feats, left_mask)
+        right_pooled = self._masked_group_max(right_feats, right_mask)
 
-            left_feats = players[:, :6, :, :].masked_fill(~left_mask, neg_value)
-            right_feats = players[:, 6:, :, :].masked_fill(~right_mask, neg_value)
+        frame_feats = torch.cat([left_pooled, right_pooled], dim=2)
+        # [B, T, 2 * (2048 + hidden_size)]
 
-            left_feats = left_feats.max(dim=1)[0]
-            right_feats = right_feats.max(dim=1)[0]
-        else:
-            left_feats = players[:, :6, :, :].max(dim=1)[0]
-            right_feats = players[:, 6:, :, :].max(dim=1)[0]
+        group_lstm_out, _ = self.frame_lstm(frame_feats)
 
-        frame_feats = torch.cat((left_feats, right_feats), dim=2)  # [B, T, hidden_size*2]
-
-        lstm_out,_ = self.frame_lstm(frame_feats) # [B, T, hidden_size]
-
-        out = self.classifier(lstm_out[:, -1, :]) # [b, num_classes]
-        
-        return out
+        logits = self.classifier(group_lstm_out[:, -1])
+        return logits

@@ -5,15 +5,9 @@ from models.b5_model import B5Model
 
 
 class B7Model(nn.Module):
-    def __init__(self, player_model: B5Model, hidden_size: int = 512, num_classes: int = 8,
-                 freeze_backbone: bool = False, ):
+    def __init__(self,hidden_size: int = 1024, num_classes: int = 8):
         super().__init__()
-        self.freeze_backbone = freeze_backbone
-        self.player_model = player_model
 
-        if freeze_backbone:
-            for param in self.player_model.parameters():
-                param.requires_grad = False
 
         player_hidden = player_model.lstm.hidden_size
 
