@@ -4,7 +4,7 @@ from torchvision import models
 from torchvision.models import ResNet50_Weights
 
 class B8Model(nn.Module):
-    def __init__(self,num_classes=8,player_hidden_size=2048,frame_hidden_size=1024,):
+    def __init__(self,num_classes=8,player_hidden_size=1024,frame_hidden_size=1024,):
         super(B8Model, self).__init__()
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
@@ -36,22 +36,26 @@ class B8Model(nn.Module):
             nn.Linear(256, num_classes),
         )
 
-    def forward(self, x, mask=None):
+    def forward(self, x):
         # x: [B, 12, T, 3, 224, 224]
         b, n, t, c, h, w = x.shape
 
+        if n != 12:
+            raise ValueError(f"B8Model expects 12 player slots, got {n}")
+
         x = x.reshape(b * n * t, c, h, w)
 
-        cnn_feats = self.feature_extractor(x).flatten(1) # [B * 12 * T, 2048]
+        cnn_feats = self.feature_extractor(x).flatten(1)
+        # [B*12*T, 2048]
 
         cnn_seq = cnn_feats.reshape(b * n, t, 2048)
-        # [B * 12, T, 2048]
+        # [B*12, T, 2048]
 
         player_lstm_out, _ = self.player_lstm(cnn_seq)
-        # [B * 12, T, player_hidden_size]
+        # [B*12, T, player_hidden_size]
 
         player_seq = torch.cat([cnn_seq, player_lstm_out], dim=2)
-        # [B * 12, T, 2048 + player_hidden_size]
+        # [B*12, T, 2048 + player_hidden_size]
 
         player_seq = player_seq.reshape(b, n, t, self.player_feat_dim)
         # [B, 12, T, player_feat_dim]
@@ -59,10 +63,9 @@ class B8Model(nn.Module):
         left_feats = player_seq[:, :6]
         right_feats = player_seq[:, 6:]
 
-        # TEST A: ignore mask completely
         left_pooled = left_feats.max(dim=1).values
         right_pooled = right_feats.max(dim=1).values
-        # [B, T, player_feat_dim]
+        # each: [B, T, player_feat_dim]
 
         frame_feats = torch.cat([left_pooled, right_pooled], dim=2)
         # [B, T, player_feat_dim * 2]

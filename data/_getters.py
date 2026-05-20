@@ -125,33 +125,22 @@ class DatasetGettersMixin:
 
     def _get_temporal_person_clip(self, item):
         list_of_frames, label = item
-        max_players = 12
 
+        max_players = 12
         frames = []
-        masks = []
 
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
 
-            players = frame["players"]
-
             # Sort players left-to-right by bbox x1
-            players = sorted(players, key=lambda player: player["bbox"][0])
-
-            # Keep only 12 players
-            players = players[:max_players]
+            players = sorted(frame["players"], key=lambda player: player["bbox"][0])
 
             crops = []
-            mask = torch.zeros(max_players, dtype=torch.bool)
 
-            for i, player in enumerate(players):
-                bbox = player["bbox"]
-
-                crop = image.crop(bbox)
+            for player in players:
+                crop = image.crop(player["bbox"])
                 crop = self._apply_crop_transform(crop)
-
                 crops.append(crop)
-                mask[i] = True
 
             # Pad missing players with zero crops
             zero_crop = torch.zeros(3, 224, 224)
@@ -162,17 +151,12 @@ class DatasetGettersMixin:
             crops = torch.stack(crops, dim=0)
 
             frames.append(crops)
-            masks.append(mask)
 
         frames = torch.stack(frames, dim=0)
-        masks = torch.stack(masks, dim=0)
 
         # [T, 12, C, H, W] -> [12, T, C, H, W]
         frames = frames.permute(1, 0, 2, 3, 4)
 
-        # [T, 12] -> [12, T]
-        masks = masks.permute(1, 0)
-
         target = torch.tensor(label, dtype=torch.long)
 
-        return frames, target, masks
+        return frames, target
