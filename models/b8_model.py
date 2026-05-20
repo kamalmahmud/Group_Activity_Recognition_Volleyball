@@ -54,7 +54,7 @@ class B8Model(nn.Module):
         player_lstm_out, _ = self.player_lstm(cnn_seq)
         # [B*12, T, player_hidden_size]
 
-        player_seq = torch.cat([cnn_seq, player_lstm_out], dim=2)
+        player_seq = player_lstm_out
         # [B*12, T, 2048 + player_hidden_size]
 
         player_seq = player_seq.reshape(b, n, t, self.player_feat_dim)
