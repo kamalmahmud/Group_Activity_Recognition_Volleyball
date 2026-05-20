@@ -1,8 +1,7 @@
 import torch
 from torch import nn
-
-from models.b3_a_model import B3AModel
-
+from torchvision import models
+from torchvision.models import ResNet50_Weights
 
 class B6Model(nn.Module):
     def __init__(
@@ -17,31 +16,8 @@ class B6Model(nn.Module):
     ):
         super().__init__()
 
-        b3a_model = B3AModel(num_classes=num_person_classes)
 
-        checkpoint = torch.load(ckpt_path, map_location="cpu")
-        state_dict = checkpoint["model_state_dict"]
-
-        # Handle DataParallel checkpoints if needed
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            if k.startswith("module."):
-                k = k[len("module."):]
-            new_state_dict[k] = v
-
-        # B6 does not need the B3A classifier head.
-        # Ignore all model.fc.* weights because your checkpoint head differs.
-        backbone_state_dict = {
-            k: v for k, v in new_state_dict.items()
-            if not k.startswith("model.fc.")
-        }
-
-        missing, unexpected = b3a_model.load_state_dict(
-            backbone_state_dict,
-            strict=False
-        )
-
-        self.feature_extractor = b3a_model.model
+        self.feature_extractor = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
 
         self.feature_extractor.fc = nn.Identity()
 

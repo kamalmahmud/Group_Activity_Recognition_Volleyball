@@ -6,11 +6,15 @@ from models.b6_model import B6Model
 from scripts import device
 from utils.runner import run
 
-checkpoint_path = "/kaggle/input/models/kamalmahmuod/b3-player/pytorch/default/1/best_model_b3_a.pth"
 lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
-model = B6Model(ckpt_path=checkpoint_path, num_classes=8).to(device)
+model = B6Model(num_classes=8).to(device)
+
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(
     [p for p in model.parameters() if p.requires_grad],
@@ -20,12 +24,6 @@ optimizer = AdamW(
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
 )
-
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
-
-
 if __name__ == "__main__":
     run(
         model=model,
