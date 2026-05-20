@@ -6,13 +6,10 @@ from torchvision.models import ResNet50_Weights
 class B6Model(nn.Module):
     def __init__(
         self,
-        ckpt_path,
         num_classes=8,
-        num_person_classes=9,
         cnn_feature_size=2048,
         lstm_hidden_size=2000,
         lstm_num_layers=1,
-        dropout=0.3,
     ):
         super().__init__()
 
