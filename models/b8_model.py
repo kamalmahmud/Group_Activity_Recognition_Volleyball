@@ -16,7 +16,7 @@ class B8Model(nn.Module):
             batch_first=True,
         )
 
-        self.player_feat_dim = 2048 + player_hidden_size
+        self.player_feat_dim = player_hidden_size
 
         self.frame_lstm = nn.LSTM(
             input_size=self.player_feat_dim * 2,
