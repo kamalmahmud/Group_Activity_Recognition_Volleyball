@@ -7,7 +7,16 @@ from tqdm import tqdm
 from .evaluator import evaluate
 
 
-def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
+def train_one_epoch(
+    model,
+    loader,
+    criterion,
+    optimizer,
+    device,
+    epoch,
+    scaler,
+    accum_steps=8,
+):
     model.train()
     running_loss = 0.0
     correct = 0
@@ -17,7 +26,9 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
 
     pbar = tqdm(loader, desc=f"Epoch {epoch} [Train]", leave=False)
 
-    for batch in pbar:
+    optimizer.zero_grad(set_to_none=True)
+
+    for step, batch in enumerate(pbar):
         if len(batch) == 2:
             frames, labels = batch
             mask = None
@@ -30,9 +41,11 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
         if mask is not None:
             mask = mask.to(device, non_blocking=True)
 
-        optimizer.zero_grad(set_to_none=True)
-
-        with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=device_type == "cuda", ):
+        with torch.autocast(
+            device_type=device_type,
+            dtype=torch.float16,
+            enabled=device_type == "cuda",
+        ):
             if mask is not None:
                 outputs = model(frames, mask=mask)
             else:
@@ -40,9 +53,15 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
 
             loss = criterion(outputs, labels)
 
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+            # important for gradient accumulation
+            loss_for_backward = loss / accum_steps
+
+        scaler.scale(loss_for_backward).backward()
+
+        if (step + 1) % accum_steps == 0 or (step + 1) == len(loader):
+            scaler.step(optimizer)
+            scaler.update()
+            optimizer.zero_grad(set_to_none=True)
 
         running_loss += loss.item() * frames.size(0)
 
