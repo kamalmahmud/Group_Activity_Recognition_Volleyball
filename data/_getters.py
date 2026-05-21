@@ -127,30 +127,40 @@ class DatasetGettersMixin:
         list_of_frames, label = item["frames"], item["target"]
 
         max_players = 12
+        zero_crop = torch.zeros(3, 224, 224)
+
+        # Step 1: Anchor slot assignment from first frame using left-to-right sort
+        first_frame_players = sorted(
+            list_of_frames[0]["players"],
+            key=lambda p: p["bbox"][0]
+        )
+        player_id_to_slot = {
+            p["player_id"]: i for i, p in enumerate(first_frame_players)
+        }
+
         frames = []
 
         for frame in list_of_frames:
             image = Image.open(frame["frame_path"]).convert("RGB")
 
-            # Sort players left-to-right by bbox x1
-            players = sorted(frame["players"], key=lambda player_: player_["bbox"][0])
+            # Step 2: Place each player into their fixed slot
+            crops = [zero_crop.clone() for _ in range(max_players)]
 
-            crops = []
+            for player in frame["players"]:
+                pid = player["player_id"]
 
-            for player in players:
+                # Handle players not seen in first frame
+                if pid not in player_id_to_slot:
+                    if len(player_id_to_slot) < max_players:
+                        player_id_to_slot[pid] = len(player_id_to_slot)
+                    else:
+                        continue  # No slots left, skip
+
+                slot = player_id_to_slot[pid]
                 crop = image.crop(player["bbox"])
-                crop = self._apply_crop_transform(crop)
-                crops.append(crop)
+                crops[slot] = self._apply_crop_transform(crop)
 
-            # Pad missing players with zero crops
-            zero_crop = torch.zeros(3, 224, 224)
-
-            while len(crops) < max_players:
-                crops.append(zero_crop.clone())
-
-            crops = torch.stack(crops, dim=0)
-
-            frames.append(crops)
+            frames.append(torch.stack(crops, dim=0))
 
         frames = torch.stack(frames, dim=0)
 
