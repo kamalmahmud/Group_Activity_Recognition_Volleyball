@@ -20,7 +20,7 @@ class B5Model(nn.Module):
         )
         self.fusion_dim = in_features + hidden_size  # 2048 + 2048
         self.person_classifier = nn.Sequential(
-            nn.LayerNorm(self.fusion_dim ),
+            nn.LayerNorm(self.fusion_dim),
             nn.Linear(self.fusion_dim , 512),
             nn.ReLU(),
             nn.Dropout(0.5),
@@ -46,7 +46,7 @@ class B5Model(nn.Module):
         if return_all_steps:
             return combined_out
 
-        player_features,_ = combined_out.max(dim=1)
+        player_features = combined_out[:, -1, :]  
         # [batch size, 2048 + hidden_size]
 
         player_logits = self.person_classifier(player_features)

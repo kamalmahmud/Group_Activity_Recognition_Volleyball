@@ -12,6 +12,7 @@ class B5BModel(nn.Module):
         if self.freeze_backbone:
             for param in self.player_model.parameters():
                 param.requires_grad = False
+            self.player_model.eval()
 
         in_feat = self.player_model.fusion_dim
         self.group_classifier = nn.Sequential(
@@ -22,13 +23,12 @@ class B5BModel(nn.Module):
             nn.Linear(512, num_classes)
         )
 
-    def forward(self, x, mask=None):
+    def forward(self, x):
         # x: [B, 12, 9, 3, 224, 224]
         b, n, t, c, h, w = x.shape
         x = x.contiguous().view(b * n, t, c, h, w)
 
         if self.freeze_backbone:
-            self.player_model.eval()
             with torch.no_grad():
                 _, player_features = self.player_model(x, return_features=True)
         else:
@@ -36,18 +36,14 @@ class B5BModel(nn.Module):
 
         player_features = player_features.reshape(b, n, -1)
 
-        if mask is not None:
-            mask = mask.to(device=player_features.device, dtype=torch.bool)
-            mask = mask.any(dim=2)
-            neg_value = torch.finfo(player_features.dtype).min
-
-            player_features = player_features.masked_fill(
-                ~mask.unsqueeze(-1),
-                neg_value
-            )
-
         group_features = player_features.max(dim=1).values
 
         group_logits = self.group_classifier(group_features)
 
         return group_logits
+
+    def train(self, mode=True):
+        super().train(mode)
+        if self.freeze_backbone:
+            self.player_model.eval()   # always keep frozen backbone in eval
+        return self

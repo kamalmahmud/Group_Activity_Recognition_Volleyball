@@ -14,6 +14,7 @@ class B7Model(nn.Module):
         if freeze_backbone:
             for param in self.player_model.parameters():
                 param.requires_grad = False
+            self.player_model.eval()
 
         player_hidden = player_model.fusion_dim
 
@@ -25,10 +26,14 @@ class B7Model(nn.Module):
         )
 
         self.classifier = nn.Sequential(
+            nn.LayerNorm(hidden_size),
             nn.Linear(hidden_size, 512),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(512, num_classes),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes),
         )
 
     def forward(self, x):
@@ -37,11 +42,8 @@ class B7Model(nn.Module):
         x = x.reshape(b * n, t, c, h, w)
 
         if self.freeze_backbone:
-            was_training = self.player_model.training
-            self.player_model.eval()
             with torch.no_grad():
                 player_out = self.player_model(x, return_all_steps=True)
-            self.player_model.train(was_training)
         else:
             player_out = self.player_model(x,return_all_steps=True)
 
@@ -53,3 +55,9 @@ class B7Model(nn.Module):
         video_features = lstm_out[:, -1, :]  # [B, hidden_size]
 
         return self.classifier(video_features)  # [B, num_classes]
+
+    def train(self, mode=True):
+        super().train(mode)
+        if self.freeze_backbone:
+            self.player_model.eval()   # always keep frozen backbone in eval
+        return self
