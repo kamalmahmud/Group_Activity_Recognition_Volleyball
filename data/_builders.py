@@ -120,12 +120,22 @@ class DatasetIndexBuildersMixin:
             for player_id, box_infos in player_boxes.items():
                 box_infos = self._sort_boxes(box_infos)
 
+                label_name = None
+                for box_info in box_infos:
+                    if int(box_info.frame_ID) == int(clip_id):
+                        label_name = box_info.category
+                        break
+
+                if label_name is None:  # skip if no label found for this clip
+                    continue
+
                 samples.append(
                     {
                         "video_id": video_id,
                         "clip_id": clip_id,
                         "player_id": player_id,
                         "box_infos": box_infos,
+                        "target": PLAYER_LABELS[label_name],
                     }
                 )
 
@@ -156,6 +166,11 @@ class DatasetIndexBuildersMixin:
                 })
 
             label = GROUP_LABELS[clip_dict["category"]]
-            samples.append((frames, label))
+            samples.append({
+                "frames": frames,
+                "target": label
+            }
+
+            )
 
         return samples

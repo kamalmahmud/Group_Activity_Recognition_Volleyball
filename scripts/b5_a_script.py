@@ -28,7 +28,7 @@ if __name__ == "__main__":
     run(
         model=model,
         mode="temporal_person",
-        num_epochs=15,
+        num_epochs=10,
         batch_size=128,
         criterion=criterion,
         optimizer=optimizer,

@@ -124,7 +124,7 @@ class DatasetGettersMixin:
         return frames, label
 
     def _get_temporal_person_clip(self, item):
-        list_of_frames, label = item
+        list_of_frames, label = item["frames"], item["target"]
 
         max_players = 12
         frames = []
@@ -133,7 +133,7 @@ class DatasetGettersMixin:
             image = Image.open(frame["frame_path"]).convert("RGB")
 
             # Sort players left-to-right by bbox x1
-            players = sorted(frame["players"], key=lambda player: player["bbox"][0])
+            players = sorted(frame["players"], key=lambda player_: player_["bbox"][0])
 
             crops = []
 
