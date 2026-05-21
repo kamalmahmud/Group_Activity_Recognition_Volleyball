@@ -34,4 +34,5 @@ if __name__ == "__main__":
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
+        num_workers=16,
         cm_filename="confusion_matrix_b8.png")
