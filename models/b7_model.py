@@ -1,15 +1,21 @@
 import torch
 import torch.nn as nn
 
-from models.b5_model import B5Model
+from models import B5Model
 
 
 class B7Model(nn.Module):
-    def __init__(self,hidden_size: int = 1024, num_classes: int = 8):
+    def __init__(self,player_model:B5Model,hidden_size: int = 2048, num_classes: int = 8,freeze_backbone: bool = True):
         super().__init__()
 
+        self.freeze_backbone = freeze_backbone
+        self.player_model = player_model
 
-        player_hidden = player_model.lstm.hidden_size
+        if freeze_backbone:
+            for param in self.player_model.parameters():
+                param.requires_grad = False
+
+        player_hidden = player_model.fusion_dim
 
         self.frame_lstm = nn.LSTM(
             input_size=player_hidden,
@@ -19,44 +25,31 @@ class B7Model(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(hidden_size, 256),
+            nn.Linear(hidden_size, 512),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(256, num_classes),
+            nn.Linear(512, num_classes),
         )
 
-    def forward(self, x, mask=None):
+    def forward(self, x):
         b, n, t, c, h, w = x.shape
 
         x = x.reshape(b * n, t, c, h, w)
 
         if self.freeze_backbone:
+            was_training = self.player_model.training
             self.player_model.eval()
             with torch.no_grad():
-                player_out = self._player_lstm_all_steps(x)  # [B*N, T, H1]
+                player_out = self.player_model(x, return_all_steps=True)
+            self.player_model.train(was_training)
         else:
-            player_out = self._player_lstm_all_steps(x)
+            player_out = self.player_model(x,return_all_steps=True)
 
-        player_out = player_out.reshape(b, n, t, -1)  # [B, N, T, H1]
+        player_out = player_out.reshape(b, n, t, -1)  # [B, N, T, fusion_dim]
 
-        if mask is not None:
-            mask = mask.to(device=player_out.device, dtype=torch.bool)
-            neg_val = torch.finfo(player_out.dtype).min
-            player_out = player_out.masked_fill(~mask.unsqueeze(-1), neg_val)
+        frame_feats = player_out.max(dim=1).values  # [B, T, fusion_dim]
 
-        frame_feats = player_out.max(dim=1).values  # [B, T, H1]
+        lstm_out, _ = self.frame_lstm(frame_feats)  # [B, T, hidden_size]
+        video_features = lstm_out[:, -1, :]  # [B, hidden_size]
 
-        lstm2_out, _ = self.frame_lstm(frame_feats)  # [B, T, hidden_size]
-        out = lstm2_out[:, -1, :]  # [B, hidden_size]
-
-        return self.classifier(out)  # [B, num_classes]
-
-    def _player_lstm_all_steps(self, x_bn: torch.Tensor) -> torch.Tensor:
-        bn, t, c, h, w = x_bn.shape
-        player = x_bn.reshape(bn * t, c, h, w)
-
-        frame_feats = self.player_model.model(player)
-        frame_feats = frame_feats.reshape(bn, t, -1)  # [B*N, T, 2048]
-
-        lstm_out, _ = self.player_model.lstm(frame_feats)  # [B*N, T, 512]
-        return lstm_out
+        return self.classifier(video_features)  # [B, num_classes]

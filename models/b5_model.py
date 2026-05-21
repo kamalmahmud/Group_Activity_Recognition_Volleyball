@@ -4,7 +4,7 @@ from torchvision import models
 
 
 class B5Model(nn.Module):
-    def __init__(self, num_classes=9, hidden_size=1024, num_layers=1):
+    def __init__(self, num_classes=9, hidden_size=2048, num_layers=1):
         # resnet50 and lstm for player classes then take last time step for all 12 players
         super().__init__()
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
@@ -17,9 +17,8 @@ class B5Model(nn.Module):
             hidden_size=hidden_size,
             num_layers=num_layers,
             batch_first=True,
-            bidirectional=True
         )
-        self.fusion_dim = in_features + hidden_size * 2  # 2048 + 2048
+        self.fusion_dim = in_features + hidden_size  # 2048 + 2048
         self.person_classifier = nn.Sequential(
             nn.LayerNorm(self.fusion_dim ),
             nn.Linear(self.fusion_dim , 512),
@@ -40,7 +39,7 @@ class B5Model(nn.Module):
         # [batch size, num frames, 2048]
 
         lstm_out, _ = self.lstm(frame_features)
-        # [batch size, num frames, hidden_size * 2]
+        # [batch size, num frames, hidden_size]
 
         combined_out = torch.cat((frame_features, lstm_out), dim=2)
         # [B, T, 2048 + hidden_size]
