@@ -103,11 +103,16 @@ class DatasetIndexBuildersMixin:
 
         return samples
 
+
+
     def _build_temporal_person_index(
             self,
             video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
+        max_standing = 3000
+        standing_count = 0
+        standing_label = PLAYER_LABELS["standing"]
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
             player_boxes: Dict[int, List[Any]] = {}
@@ -128,6 +133,11 @@ class DatasetIndexBuildersMixin:
 
                 if label_name is None:  # skip if no label found for this clip
                     continue
+
+                if label_name == standing_label:
+                    if standing_count >= max_standing:
+                        continue
+                    standing_count += 1
 
                 samples.append(
                     {

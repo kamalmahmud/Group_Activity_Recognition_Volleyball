@@ -6,7 +6,6 @@ from models.b6_model import B6Model
 from scripts import device
 from utils.runner import run
 
-lr = 1e-4
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
 model = B6Model(num_classes=8).to(device)
@@ -18,7 +17,7 @@ if torch.cuda.device_count() > 1:
 criterion = nn.CrossEntropyLoss()
 optimizer = AdamW(
     [p for p in model.parameters() if p.requires_grad],
-    lr=lr,
+    lr=1e-4,
     weight_decay=1e-4,
 )
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
