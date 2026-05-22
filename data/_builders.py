@@ -132,7 +132,7 @@ class DatasetIndexBuildersMixin:
                 if label_name is None:  # skip if no label found for this clip
                     continue
 
-                if label_name == standing_label:
+                if PLAYER_LABELS[label_name] == standing_label:
                     if standing_count >= max_standing:
                         continue
                     standing_count += 1
