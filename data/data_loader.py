@@ -72,5 +72,8 @@ def get_data_loader(pkl_path,
                              batch_size=batch_size,
                              num_workers=num_workers,
                              pin_memory=True)
+    print(f"Train samples: {len(train_dataset.samples)}")
+    print(f"Val samples:   {len(val_dataset.samples)}")
+    print(f"Test samples:  {len(test_dataset.samples)}")
 
     return train_loader, val_loader, test_loader
