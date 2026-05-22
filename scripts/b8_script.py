@@ -13,7 +13,7 @@ if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-3)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-3)
 
 criterion = nn.CrossEntropyLoss()
 
