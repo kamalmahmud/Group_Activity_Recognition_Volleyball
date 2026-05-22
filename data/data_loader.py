@@ -52,12 +52,12 @@ def get_data_loader(pkl_path,
                                      frame_transform=frame_transform,
                                      crop_transform=crop_transform)
 
-    train_sampler = make_weighted_sampler(train_dataset)
+    # train_sampler = make_weighted_sampler(train_dataset)
 
     train_loader = DataLoader(dataset=train_dataset,
-                              # shuffle=True,
+                              shuffle=True,
                               batch_size=batch_size,
-                              sampler=train_sampler,
+                              # sampler=train_sampler,
                               num_workers=num_workers,
                               pin_memory=True)
 

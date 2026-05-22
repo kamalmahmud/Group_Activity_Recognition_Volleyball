@@ -29,10 +29,10 @@ if __name__ == "__main__":
         model=model,
         mode="temporal_person",
         num_epochs=15,
-        batch_size=64,
+        batch_size=128,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
-        num_workers = 4,
+        num_workers = 16,
         cm_filename="confusion_matrix_b5_a.png")
