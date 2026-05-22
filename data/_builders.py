@@ -103,14 +103,12 @@ class DatasetIndexBuildersMixin:
 
         return samples
 
-
-
     def _build_temporal_person_index(
             self,
             video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
-        max_standing = 3000
+        max_standing = 1000
         standing_count = 0
         standing_label = PLAYER_LABELS["standing"]
 
@@ -179,8 +177,6 @@ class DatasetIndexBuildersMixin:
             samples.append({
                 "frames": frames,
                 "target": label
-            }
-
-            )
+            })
 
         return samples
