@@ -2,24 +2,20 @@ import torch
 import torch.nn as nn
 from torch.optim import AdamW
 from data import GROUP_LABELS
-from models.b5_model import B5Model
 from models.b7_model import B7Model
 from scripts import device
-from scripts.script_constants import player_temporal_checkpoint_path
 from utils.runner import run
 
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
-player_model = B5Model().to(device)
-
-model = B7Model(player_model,freeze_backbone=False).to(device)
+model = B7Model().to(device)
 
 if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
-    
+
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
+optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
