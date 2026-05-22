@@ -10,10 +10,15 @@ from utils.runner import run
 CLASS_NAMES = list(GROUP_LABELS.keys())
 
 player_model = B5Model().to(device)
-
 model = B5BModel(player_model=player_model, freeze_backbone=False).to(device)
+
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
+
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+
+optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
@@ -21,9 +26,6 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     factor=0.5,
     patience=3
 )
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
 
 if __name__ == "__main__":
     run(
