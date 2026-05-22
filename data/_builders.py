@@ -108,7 +108,7 @@ class DatasetIndexBuildersMixin:
             video_ids: Sequence[str],
     ) -> List[Dict[str, Any]]:
         samples = []
-        max_standing = 1000
+        max_standing = 100
         standing_count = 0
         standing_label = PLAYER_LABELS["standing"]
 
