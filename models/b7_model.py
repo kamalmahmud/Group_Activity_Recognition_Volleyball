@@ -1,33 +1,40 @@
 import torch
 import torch.nn as nn
-
-from models import B5Model
+from torchvision import models
+from torchvision.models import ResNet50_Weights
 
 
 class B7Model(nn.Module):
-    def __init__(self,player_model:B5Model,hidden_size: int = 2048, num_classes: int = 8,freeze_backbone: bool = True):
-        super().__init__()
+    def __init__(
+        self,
+        num_classes=8,
+        player_hidden_size=2048,
+        frame_hidden_size=1024,
+    ):
+        super(B7Model, self).__init__()
 
-        self.freeze_backbone = freeze_backbone
-        self.player_model = player_model
+        resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
+        self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
 
-        if freeze_backbone:
-            for param in self.player_model.parameters():
-                param.requires_grad = False
-            self.player_model.eval()
+        self.player_lstm = nn.LSTM(
+            input_size=2048,
+            hidden_size=player_hidden_size,
+            num_layers=1,
+            batch_first=True,
+        )
 
-        player_hidden = player_model.fusion_dim
+        self.player_feat_dim = 2048 + player_hidden_size
 
         self.frame_lstm = nn.LSTM(
-            input_size=player_hidden,
-            hidden_size=hidden_size,
+            input_size=self.player_feat_dim,
+            hidden_size=frame_hidden_size,
             num_layers=1,
             batch_first=True,
         )
 
         self.classifier = nn.Sequential(
-            nn.LayerNorm(hidden_size),
-            nn.Linear(hidden_size, 512),
+            nn.LayerNorm(frame_hidden_size),
+            nn.Linear(frame_hidden_size, 512),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(512, 256),
@@ -37,27 +44,36 @@ class B7Model(nn.Module):
         )
 
     def forward(self, x):
+        # x: [B, 12, T, 3, 224, 224]
         b, n, t, c, h, w = x.shape
 
-        x = x.reshape(b * n, t, c, h, w)
+        if n != 12:
+            raise ValueError(f"B7Model expects 12 player slots, got {n}")
 
-        if self.freeze_backbone:
-            with torch.no_grad():
-                player_out = self.player_model(x, return_all_steps=True)
-        else:
-            player_out = self.player_model(x,return_all_steps=True)
+        x = x.reshape(b * n * t, c, h, w)
 
-        player_out = player_out.reshape(b, n, t, -1)  # [B, N, T, fusion_dim]
+        cnn_feats = self.feature_extractor(x).flatten(1)
+        # [B*12*T, 2048]
 
-        frame_feats = player_out.max(dim=1).values  # [B, T, fusion_dim]
+        cnn_seq = cnn_feats.reshape(b * n, t, 2048)
+        # [B*12, T, 2048]
 
-        lstm_out, _ = self.frame_lstm(frame_feats)  # [B, T, hidden_size]
-        video_features = lstm_out[:, -1, :]  # [B, hidden_size]
+        player_lstm_out, _ = self.player_lstm(cnn_seq)
+        # [B*12, T, player_hidden_size]
 
-        return self.classifier(video_features)  # [B, num_classes]
+        player_seq = torch.cat([cnn_seq, player_lstm_out], dim=2)
+        # [B*12, T, 2048 + player_hidden_size]
 
-    def train(self, mode=True):
-        super().train(mode)
-        if self.freeze_backbone:
-            self.player_model.eval()   # always keep frozen backbone in eval
-        return self
+        player_seq = player_seq.reshape(b, n, t, self.player_feat_dim)
+        # [B, 12, T, player_feat_dim]
+
+        frame_feats = player_seq.max(dim=1).values
+        # [B, T, player_feat_dim]
+
+        frame_lstm_out, _ = self.frame_lstm(frame_feats)
+        # [B, T, frame_hidden_size]
+
+        logits = self.classifier(frame_lstm_out[:, -1])
+        # [B, num_classes]
+
+        return logits
