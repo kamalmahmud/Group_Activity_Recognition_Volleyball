@@ -10,9 +10,6 @@ class B5Model(nn.Module):
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
         in_features = self.model.fc.in_features
-        for name, param in self.model.named_parameters():
-            if not any(x in name for x in ["layer3","layer4", "fc"]):
-                param.requires_grad = False
         self.model.fc = nn.Identity()
 
         self.lstm = nn.LSTM(
