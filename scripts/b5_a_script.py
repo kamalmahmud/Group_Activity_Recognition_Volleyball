@@ -29,7 +29,7 @@ if __name__ == "__main__":
         model=model,
         mode="temporal_person",
         num_epochs=15,
-        batch_size=32,
+        batch_size=64,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
