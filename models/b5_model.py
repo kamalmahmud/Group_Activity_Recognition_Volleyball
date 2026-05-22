@@ -10,6 +10,9 @@ class B5Model(nn.Module):
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
         in_features = self.model.fc.in_features
+        for name, param in self.model.named_parameters():
+            if not any(x in name for x in ["layer4", "fc"]):
+                param.requires_grad = False
         self.model.fc = nn.Identity()
 
         self.lstm = nn.LSTM(
@@ -46,7 +49,7 @@ class B5Model(nn.Module):
         if return_all_steps:
             return combined_out
 
-        player_features = combined_out[:, -1, :]  
+        player_features = combined_out[:, -1, :]
         # [batch size, 2048 + hidden_size]
 
         player_logits = self.person_classifier(player_features)
