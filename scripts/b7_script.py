@@ -13,24 +13,23 @@ if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
 
+# Unwrap DataParallel to safely access submodules
+raw_model = model.module if isinstance(model, nn.DataParallel) else model
+
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW([
-    # Pretrained ResNet — very small lr, mostly frozen knowledge
-    {"params": model.feature_extractor.parameters(), "lr": 1e-5, "weight_decay": 1e-4},
-
-    # LSTMs — moderate lr, learning temporal patterns from scratch
-    {"params": list(model.player_lstm.parameters()) +
-               list(model.frame_lstm.parameters()),  "lr": 1e-4, "weight_decay": 1e-4},
-
-    # Classifier head — highest lr, lightweight and task-specific
-    {"params": model.classifier.parameters(),        "lr": 3e-4, "weight_decay": 1e-2},
-],)
+    {"params": raw_model.feature_extractor.parameters(), "lr": 1e-5, "weight_decay": 1e-4},
+    {"params": list(raw_model.player_lstm.parameters()) +
+               list(raw_model.frame_lstm.parameters()),  "lr": 1e-4, "weight_decay": 1e-4},
+    {"params": raw_model.classifier.parameters(),        "lr": 3e-4, "weight_decay": 1e-2},
+])
 
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer,
     T_max=20,
     eta_min=1e-6,
 )
+
 if __name__ == "__main__":
     run(
         model=model,
