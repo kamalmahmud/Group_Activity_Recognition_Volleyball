@@ -35,7 +35,7 @@ def get_data_loader(pkl_path,
                                       split="train",
                                       mode=mode,
                                       frame_transform=frame_transform,
-                                      crop_transform=train_crop_transform
+                                      crop_transform=crop_transform
                                       )
 
     val_dataset = VolleyballDataset(pkl_path,
