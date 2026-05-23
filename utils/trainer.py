@@ -41,6 +41,8 @@ def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
             loss = criterion(outputs, labels)
 
         scaler.scale(loss).backward()
+        scaler.unscale_(optimizer)  # ← required before clipping with AMP
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         scaler.step(optimizer)
         scaler.update()
 
@@ -106,7 +108,7 @@ def train(
 
         elapsed = time.time() - t0
 
-        current_lr = optimizer.param_groups[0]["lr"]
+        current_lr = optimizer.param_groups[-1]["lr"]
 
         print(
             f"Epoch [{epoch:>3}/{num_epochs}] "
