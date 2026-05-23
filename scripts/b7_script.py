@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.optim import AdamW
 from data import GROUP_LABELS
 from models.b7_model import B7Model
 from scripts import device
@@ -15,7 +14,7 @@ if torch.cuda.device_count() > 1:
     model = nn.DataParallel(model)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-3)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
@@ -30,4 +29,5 @@ if __name__ == "__main__":
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
+        num_workers=4,
         cm_filename="confusion_matrix_b7.png")

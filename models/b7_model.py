@@ -3,16 +3,9 @@ import torch.nn as nn
 from torchvision import models
 from torchvision.models import ResNet50_Weights
 
-
 class B7Model(nn.Module):
-    def __init__(
-        self,
-        num_classes=8,
-        player_hidden_size=2048,
-        frame_hidden_size=1024,
-    ):
+    def __init__(self, num_classes=8, player_hidden_size=2048, frame_hidden_size=1024):
         super(B7Model, self).__init__()
-
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
 
@@ -62,18 +55,18 @@ class B7Model(nn.Module):
         # [B*12, T, player_hidden_size]
 
         player_seq = torch.cat([cnn_seq, player_lstm_out], dim=2)
-        # [B*12, T, 2048 + player_hidden_size]
+        # [B*12, T, player_feat_dim]
 
         player_seq = player_seq.reshape(b, n, t, self.player_feat_dim)
         # [B, 12, T, player_feat_dim]
 
-        frame_feats = player_seq.max(dim=1).values
+        frame_feats = player_seq.max(dim=1).values  # ← pool all 12 players at once
         # [B, T, player_feat_dim]
 
-        frame_lstm_out, _ = self.frame_lstm(frame_feats)
+        group_lstm_out, _ = self.frame_lstm(frame_feats)
         # [B, T, frame_hidden_size]
 
-        logits = self.classifier(frame_lstm_out[:, -1])
-        # [B, num_classes]
+        logits = self.classifier(group_lstm_out[:, -1])
+        # [B, 8]
 
         return logits
