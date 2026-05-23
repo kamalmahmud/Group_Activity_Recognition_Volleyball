@@ -104,7 +104,7 @@ def train(
             print_report=False,
         )
         if scheduler is not None:
-            scheduler.step()
+            scheduler.step(val_loss)
 
         elapsed = time.time() - t0
 
