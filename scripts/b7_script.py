@@ -17,7 +17,12 @@ if torch.cuda.device_count() > 1:
 raw_model = model.module if isinstance(model, nn.DataParallel) else model
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+optimizer = torch.optim.AdamW([
+    {"params": raw_model.feature_extractor.parameters(), "lr": 1e-5},
+    {"params": raw_model.player_lstm.parameters(), "lr": 3e-4},
+    {"params": raw_model.frame_lstm.parameters(), "lr": 3e-4},
+    {"params": raw_model.classifier.parameters(), "lr": 3e-4},
+], weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
     optimizer,
