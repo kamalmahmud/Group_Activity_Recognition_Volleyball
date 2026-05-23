@@ -58,6 +58,8 @@ def get_data_loader(pkl_path,
                               shuffle=True,
                               batch_size=batch_size,
                               # sampler=train_sampler,
+                              persistent_workers=True,
+                              prefetch_factor=2,
                               num_workers=num_workers,
                               pin_memory=True)
 
@@ -65,12 +67,15 @@ def get_data_loader(pkl_path,
                             shuffle=False,
                             batch_size=batch_size,
                             num_workers=num_workers,
+                            persistent_workers=True,
+                            prefetch_factor=2,
                             pin_memory=True)
 
     test_loader = DataLoader(dataset=test_dataset,
                              shuffle=False,
                              batch_size=batch_size,
                              num_workers=num_workers,
+                             prefetch_factor=2,
                              pin_memory=True)
     print(f"Train samples: {len(train_dataset.samples)}")
     print(f"Val samples:   {len(val_dataset.samples)}")
