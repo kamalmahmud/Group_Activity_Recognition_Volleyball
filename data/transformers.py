@@ -16,8 +16,8 @@ def get_transform():
     ])
 
     train_crop_transform = transforms.Compose([
-        transforms.ColorJitter(brightness=0.3, contrast=0.3),
-        transforms.RandomAffine(degrees=10, translate=(0.1, 0.1)),
+        # transforms.ColorJitter(brightness=0.3, contrast=0.3),
+        # transforms.RandomAffine(degrees=10, translate=(0.1, 0.1)),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406],
