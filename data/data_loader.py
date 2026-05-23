@@ -27,7 +27,6 @@ def get_data_loader(pkl_path,
                     mode: str,
                     frame_transform,
                     crop_transform,
-                    train_crop_transform,
                     batch_size: int,
                     num_workers: int,
                     ):
