@@ -28,13 +28,14 @@ def run(
     if class_names is None:
         class_names = list(GROUP_LABELS.keys())
 
-    frame_transform, crop_transform = get_transform()
+    frame_transform, crop_transform,train_crop_transform = get_transform()
     train_loader, val_loader, test_loader = get_data_loader(
         pkl_path=pkl_path,
         videos_path=videos_path,
         mode=mode,
         frame_transform=frame_transform,
         crop_transform=crop_transform,
+        train_crop_transform=train_crop_transform,
         batch_size=batch_size,
         num_workers=num_workers,
     )

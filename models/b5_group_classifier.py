@@ -19,7 +19,7 @@ class B5BModel(nn.Module):
             nn.LayerNorm(in_feat),
             nn.Linear(in_feat, 512),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.5),
             nn.Linear(512, num_classes)
         )
 

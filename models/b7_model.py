@@ -4,7 +4,7 @@ from torchvision import models
 from torchvision.models import ResNet50_Weights
 
 class B7Model(nn.Module):
-    def __init__(self, num_classes=8, player_hidden_size=1024, frame_hidden_size=512):
+    def __init__(self, num_classes=8, player_hidden_size=1024, frame_hidden_size=1024):
         super(B7Model, self).__init__()
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
@@ -26,10 +26,14 @@ class B7Model(nn.Module):
         )
 
         self.classifier = nn.Sequential(
+            nn.LayerNorm(frame_hidden_size),
             nn.Linear(frame_hidden_size, 512),
             nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(512, num_classes),
+            nn.Dropout(0.5),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes),
         )
 
     def forward(self, x):
