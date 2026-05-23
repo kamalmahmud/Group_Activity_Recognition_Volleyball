@@ -14,10 +14,22 @@ if torch.cuda.device_count() > 1:
     model = nn.DataParallel(model)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(model.parameters(), lr=5e-5, weight_decay=1e-3)
+optimizer = torch.optim.AdamW([
+    # Pretrained ResNet — very small lr, mostly frozen knowledge
+    {"params": model.feature_extractor.parameters(), "lr": 1e-5, "weight_decay": 1e-4},
 
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    optimizer, mode="min", factor=0.5, patience=3
+    # LSTMs — moderate lr, learning temporal patterns from scratch
+    {"params": list(model.player_lstm.parameters()) +
+               list(model.frame_lstm.parameters()),  "lr": 1e-4, "weight_decay": 1e-4},
+
+    # Classifier head — highest lr, lightweight and task-specific
+    {"params": model.classifier.parameters(),        "lr": 3e-4, "weight_decay": 1e-2},
+],)
+
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+    optimizer,
+    T_max=20,
+    eta_min=1e-6,
 )
 if __name__ == "__main__":
     run(
