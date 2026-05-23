@@ -26,7 +26,7 @@ class B5BModel(nn.Module):
     def forward(self, x):
         # x: [B, 12, 9, 3, 224, 224]
         b, n, t, c, h, w = x.shape
-        x = x.contiguous().view(b * n, t, c, h, w)
+        x = x.reshape(b * n, t, c, h, w)
 
         if self.freeze_backbone:
             with torch.no_grad():
