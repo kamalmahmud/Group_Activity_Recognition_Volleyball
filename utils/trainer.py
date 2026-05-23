@@ -108,7 +108,7 @@ def train(
 
         elapsed = time.time() - t0
 
-        current_lr = optimizer.param_groups[-1]["lr"]
+        current_lr = optimizer.param_groups[0]["lr"]
 
         print(
             f"Epoch [{epoch:>3}/{num_epochs}] "
