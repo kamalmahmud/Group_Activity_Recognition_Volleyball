@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.optim import AdamW
 from data import GROUP_LABELS
 from models.b5_group_classifier import B5BModel
 from models.b5_model import B5Model

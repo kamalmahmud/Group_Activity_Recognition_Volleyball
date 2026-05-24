@@ -13,11 +13,8 @@ if torch.cuda.device_count() > 1:
     print(f"Using {torch.cuda.device_count()} GPUs")
     model = nn.DataParallel(model)
 
-# Unwrap DataParallel to safely access submodules
-raw_model = model.module if isinstance(model, nn.DataParallel) else model
-
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(raw_model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
@@ -36,5 +33,4 @@ if __name__ == "__main__":
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
-        num_workers=4,
         cm_filename="confusion_matrix_b7.png")
