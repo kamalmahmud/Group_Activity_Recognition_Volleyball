@@ -15,11 +15,8 @@ if torch.cuda.device_count() > 1:
     model = nn.DataParallel(model)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = AdamW(
-    [p for p in model.parameters() if p.requires_grad],
-    lr=1e-4,
-    weight_decay=1e-4,
-)
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer, mode="min", factor=0.5, patience=3
 )
