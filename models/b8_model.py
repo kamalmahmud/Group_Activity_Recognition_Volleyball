@@ -13,9 +13,8 @@ class B8Model(nn.Module):
         self.player_lstm = nn.LSTM(
             input_size=2048,
             hidden_size=player_hidden_size,
-            num_layers=2,
+            num_layers=1,
             batch_first=True,
-            dropout=0.3,
         )
 
         self.player_feat_dim = 2048 + player_hidden_size
@@ -23,16 +22,15 @@ class B8Model(nn.Module):
         self.frame_lstm = nn.LSTM(
             input_size=self.player_feat_dim * 2,
             hidden_size=frame_hidden_size,
-            num_layers=2,
+            num_layers=1,
             batch_first=True,
-            dropout=0.3,
         )
 
         self.classifier = nn.Sequential(
             nn.LayerNorm(frame_hidden_size),
             nn.Linear(frame_hidden_size, 256),
-            nn.GELU(),
-            nn.Dropout(0.4),
+            nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(256, num_classes),
         )
 
@@ -73,7 +71,7 @@ class B8Model(nn.Module):
         group_lstm_out, _ = self.frame_lstm(frame_feats)
         # [B, T, frame_hidden_size]
 
-        logits = self.classifier(group_lstm_out.mean(dim=1))
+        logits = self.classifier(group_lstm_out[:, -1])
         # [B, 8]
 
         return logits

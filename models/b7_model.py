@@ -29,10 +29,10 @@ class B7Model(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.LayerNorm(frame_hidden_size),
-            nn.Linear(frame_hidden_size, 512),
+            nn.Linear(frame_hidden_size, 256),
             nn.ReLU(),
-            nn.Dropout(0.3),
-            nn.Linear(512, num_classes),
+            nn.Dropout(0.5),
+            nn.Linear(256, num_classes),
         )
 
     def forward(self, x):
