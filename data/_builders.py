@@ -174,7 +174,7 @@ class DatasetIndexBuildersMixin:
 
             label = GROUP_LABELS[clip_dict["category"]]
             labels_array[label] += 1
-            if labels_array[label] > max_num:
+            if labels_array[label] < max_num:
                 samples.append({
                     "frames": frames,
                     "target": label
