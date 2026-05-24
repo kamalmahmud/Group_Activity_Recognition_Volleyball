@@ -3,6 +3,7 @@ import torch.nn as nn
 from torchvision import models
 from torchvision.models import ResNet50_Weights
 
+
 class B7Model(nn.Module):
     def __init__(self, num_classes=8, player_hidden_size=2048, frame_hidden_size=1024):
         super(B7Model, self).__init__()
@@ -12,8 +13,9 @@ class B7Model(nn.Module):
         self.player_lstm = nn.LSTM(
             input_size=2048,
             hidden_size=player_hidden_size,
-            num_layers=1,
+            num_layers=2,
             batch_first=True,
+            dropout=0.3,
         )
 
         self.player_feat_dim = 2048 + player_hidden_size

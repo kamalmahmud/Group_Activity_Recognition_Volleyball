@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from models import B5Model
 
-
 class B5BModel(nn.Module):
     def __init__(self, player_model: B5Model, num_classes=8, freeze_backbone=False):
         super(B5BModel, self).__init__()
@@ -45,5 +44,5 @@ class B5BModel(nn.Module):
     def train(self, mode=True):
         super().train(mode)
         if self.freeze_backbone:
-            self.player_model.eval()   # always keep frozen backbone in eval
+            self.player_model.eval()  # always keep frozen backbone in eval
         return self

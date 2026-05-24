@@ -3,8 +3,9 @@ import torch.nn as nn
 from torchvision import models
 from torchvision.models import ResNet50_Weights
 
+
 class B8Model(nn.Module):
-    def __init__(self,num_classes=8,player_hidden_size=2048,frame_hidden_size=1024,):
+    def __init__(self, num_classes=8, player_hidden_size=2048, frame_hidden_size=1024, ):
         super(B8Model, self).__init__()
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
@@ -28,11 +29,13 @@ class B8Model(nn.Module):
         self.classifier = nn.Sequential(
             nn.LayerNorm(frame_hidden_size),
             nn.Linear(frame_hidden_size, 512),
+            nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.4),
             nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.Linear(256, num_classes),
         )
 

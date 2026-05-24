@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from models.b3_a_model import B3AModel
 
 

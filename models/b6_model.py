@@ -40,14 +40,14 @@ class B6Model(nn.Module):
 
         features = self.feature_extractor(x)  # [B*t*N, 2048]
 
-        features = features.reshape(b, n, t, -1) # [B, N, T, 2048]
+        features = features.reshape(b, n, t, -1)  # [B, N, T, 2048]
 
         frame_features = torch.max(features, dim=1).values  # [B, t, 2048]
 
-        lstm_out, _ = self.lstm(frame_features) # [B, t, lstm_hidden_size]
+        lstm_out, _ = self.lstm(frame_features)  # [B, t, lstm_hidden_size]
 
-        clip_features = lstm_out[:, -1, :] # [B, lstm_hidden_size]
+        clip_features = lstm_out[:, -1, :]  # [B, lstm_hidden_size]
 
-        logits = self.classifier(clip_features) # [B, 8]
+        logits = self.classifier(clip_features)  # [B, 8]
 
         return logits
