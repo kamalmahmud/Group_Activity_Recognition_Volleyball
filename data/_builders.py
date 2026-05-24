@@ -150,6 +150,8 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_temporal_person_clip_index(self, video_ids):
+        max_num = 87
+        labels_array = [0] * 8
         samples = []
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
@@ -174,9 +176,11 @@ class DatasetIndexBuildersMixin:
                 })
 
             label = GROUP_LABELS[clip_dict["category"]]
-            samples.append({
-                "frames": frames,
-                "target": label
-            })
+            labels_array[label] += 1
+            if labels_array[label] > max_num:
+                samples.append({
+                    "frames": frames,
+                    "target": label
+                })
 
         return samples

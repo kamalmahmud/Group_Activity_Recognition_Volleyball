@@ -10,7 +10,7 @@ class B6Model(nn.Module):
             num_classes=8,
             cnn_feature_size=2048,
             lstm_hidden_size=2048,
-            lstm_num_layers=1,
+            lstm_num_layers=2,
     ):
         super().__init__()
 
@@ -22,6 +22,7 @@ class B6Model(nn.Module):
             hidden_size=lstm_hidden_size,
             num_layers=lstm_num_layers,
             batch_first=True,
+            dropout=0.3,
         )
 
         self.classifier = nn.Sequential(
