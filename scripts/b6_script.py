@@ -24,10 +24,11 @@ if __name__ == "__main__":
     run(
         model=model,
         mode="temporal_person_clip",
-        num_epochs=15,
-        batch_size=4,
+        num_epochs=25,
+        batch_size=16,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
+        num_workers=16,
         cm_filename="confusion_matrix_b6.png")
