@@ -30,14 +30,9 @@ class B8Model(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.LayerNorm(frame_hidden_size),
-            nn.Linear(frame_hidden_size, 512),
-            nn.BatchNorm1d(512),
-            nn.ReLU(),
+            nn.Linear(frame_hidden_size, 256),
+            nn.GELU(),
             nn.Dropout(0.4),
-            nn.Linear(512, 256),
-            nn.BatchNorm1d(256),
-            nn.ReLU(),
-            nn.Dropout(0.3),
             nn.Linear(256, num_classes),
         )
 
@@ -78,7 +73,7 @@ class B8Model(nn.Module):
         group_lstm_out, _ = self.frame_lstm(frame_feats)
         # [B, T, frame_hidden_size]
 
-        logits = self.classifier(group_lstm_out[:, -1])
+        logits = self.classifier(group_lstm_out.mean(dim=1))
         # [B, 8]
 
         return logits
