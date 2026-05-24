@@ -13,8 +13,9 @@ class B8Model(nn.Module):
         self.player_lstm = nn.LSTM(
             input_size=2048,
             hidden_size=player_hidden_size,
-            num_layers=1,
+            num_layers=2,
             batch_first=True,
+            dropout=0.3,
         )
 
         self.player_feat_dim = 2048 + player_hidden_size
@@ -22,8 +23,9 @@ class B8Model(nn.Module):
         self.frame_lstm = nn.LSTM(
             input_size=self.player_feat_dim * 2,
             hidden_size=frame_hidden_size,
-            num_layers=1,
+            num_layers=2,
             batch_first=True,
+            dropout=0.3,
         )
 
         self.classifier = nn.Sequential(
