@@ -4,7 +4,7 @@ from torchvision import models
 from torchvision.models import ResNet50_Weights
 
 class B7Model(nn.Module):
-    def __init__(self, num_classes=8, player_hidden_size=1024, frame_hidden_size=1024):
+    def __init__(self, num_classes=8, player_hidden_size=2048, frame_hidden_size=1024):
         super(B7Model, self).__init__()
         resnet = models.resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         self.feature_extractor = nn.Sequential(*list(resnet.children())[:-1])
