@@ -4,7 +4,7 @@ from torchvision import models
 
 
 class B5Model(nn.Module):
-    def __init__(self, num_classes=9, hidden_size=2048, num_layers=1):
+    def __init__(self, num_classes=9, hidden_size=1024, num_layers=1):
         # resnet50 and lstm for player classes then take last time step for all 12 players
         super().__init__()
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
