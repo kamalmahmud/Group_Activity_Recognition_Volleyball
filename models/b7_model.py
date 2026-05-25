@@ -13,9 +13,8 @@ class B7Model(nn.Module):
         self.player_lstm = nn.LSTM(
             input_size=2048,
             hidden_size=player_hidden_size,
-            num_layers=2,
+            num_layers=1,
             batch_first=True,
-            dropout=0.3,
         )
 
         self.player_feat_dim = 2048 + player_hidden_size

@@ -147,7 +147,7 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_temporal_person_clip_index(self, video_ids):
-        max_num = 250
+        max_num = 1000
         labels_array = [0] * 8
         samples = []
 
