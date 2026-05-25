@@ -32,9 +32,9 @@ class B5BModel(nn.Module):
 
         if self.freeze_backbone:
             with torch.no_grad():
-                _, player_features = self.player_model(x, return_features=True)
+                player_features = self.player_model(x, return_features=True)
         else:
-            _, player_features = self.player_model(x, return_features=True)
+            player_features = self.player_model(x, return_features=True)
 
         player_features = player_features.reshape(b, n, -1)
 
