@@ -5,7 +5,7 @@ from .constants import GROUP_LABELS, PLAYER_LABELS
 
 class DatasetIndexBuildersMixin:
     # Builds dataset indices for all modes.
-    def _build_frame_index(self,video_ids: Sequence[str],) -> List[Dict[str, Any]]:
+    def _build_frame_index(self, video_ids: Sequence[str], ) -> List[Dict[str, Any]]:
         samples = []
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
@@ -147,8 +147,7 @@ class DatasetIndexBuildersMixin:
         return samples
 
     def _build_temporal_person_clip_index(self, video_ids):
-        max_num = 1000
-        labels_array = [0] * 8
+
         samples = []
 
         for video_id, clip_id, clip_dict in self._iter_clips(video_ids):
@@ -173,11 +172,10 @@ class DatasetIndexBuildersMixin:
                 })
 
             label = GROUP_LABELS[clip_dict["category"]]
-            labels_array[label] += 1
-            if labels_array[label] < max_num:
-                samples.append({
-                    "frames": frames,
-                    "target": label
-                })
+
+            samples.append({
+                "frames": frames,
+                "target": label
+            })
 
         return samples

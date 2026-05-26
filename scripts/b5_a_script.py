@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+
 from data import PLAYER_LABELS
 from models.b5_model import B5Model
 from scripts import device
@@ -34,5 +35,5 @@ if __name__ == "__main__":
         optimizer=optimizer,
         scheduler=scheduler,
         class_names=CLASS_NAMES,
-        num_workers = 4,
+        num_workers=4,
         cm_filename="confusion_matrix_b5_a.png")

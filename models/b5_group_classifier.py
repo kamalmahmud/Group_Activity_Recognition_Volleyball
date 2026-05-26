@@ -1,6 +1,8 @@
 import torch
 from torch import nn
+
 from models import B5Model
+
 
 class B5BModel(nn.Module):
     def __init__(self, player_model: B5Model, num_classes=8, freeze_backbone=False):

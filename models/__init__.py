@@ -3,3 +3,8 @@ from .b3_a_model import B3AModel
 from .b3_b_model import B3BModel
 from .b4_model import B4Model
 from .b5_model import B5Model
+from .b5_group_classifier import B5BModel
+from .b6_model import B6Model
+from .b7_model import B7Model
+from .b8_model import B8Model
+

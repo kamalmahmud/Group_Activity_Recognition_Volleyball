@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+
 from data import GROUP_LABELS
 from models.b7_model import B7Model
 from scripts import device

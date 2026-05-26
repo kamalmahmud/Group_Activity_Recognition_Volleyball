@@ -1,5 +1,6 @@
-import torch
 import os
+
+import torch
 
 ON_KAGGLE = "KAGGLE_KERNEL_RUN_TYPE" in os.environ
 if ON_KAGGLE:

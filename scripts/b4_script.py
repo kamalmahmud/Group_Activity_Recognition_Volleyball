@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+
 from data import GROUP_LABELS
 from models.b4_model import B4Model
-from scripts import  device
+from scripts import device
 from utils.runner import run
 
 checkpoint_path = "/kaggle/input/models/kamalalqedra/baseline4/pytorch/default/1/best_model.pth"
@@ -14,6 +15,10 @@ model = B4Model(num_classes=len(CLASS_NAMES)).to(device)
 
 checkpoint = torch.load(checkpoint_path, map_location=device)
 model.load_state_dict(checkpoint["model_state_dict"])
+
+if torch.cuda.device_count() > 1:
+    print(f"Using {torch.cuda.device_count()} GPUs")
+    model = nn.DataParallel(model)
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
@@ -26,10 +31,6 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     factor=0.5,
     patience=3
 )
-
-if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs")
-    model = nn.DataParallel(model)
 
 if __name__ == "__main__":
     run(

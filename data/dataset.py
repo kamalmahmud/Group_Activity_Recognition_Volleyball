@@ -1,8 +1,6 @@
 import pickle
 from typing import Callable, Dict, Optional, Tuple
-
 from torch.utils.data import Dataset
-
 from ._builders import DatasetIndexBuildersMixin
 from ._getters import DatasetGettersMixin
 from ._helpers import DatasetHelpersMixin

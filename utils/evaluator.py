@@ -1,7 +1,7 @@
-import torch
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import torch
 from sklearn.metrics import (classification_report, confusion_matrix, accuracy_score, )
 from tqdm import tqdm
 

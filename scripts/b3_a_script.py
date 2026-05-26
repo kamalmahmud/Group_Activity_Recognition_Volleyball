@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+
 from data import PLAYER_LABELS
 from models.b3_a_model import B3AModel
 from scripts import device

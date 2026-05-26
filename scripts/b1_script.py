@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
+
 from data import GROUP_LABELS
 from models.b1_model import B1Model
 from scripts import device

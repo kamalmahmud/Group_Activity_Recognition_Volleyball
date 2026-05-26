@@ -1,8 +1,10 @@
-from torch.utils.data import DataLoader
-from .dataset import VolleyballDataset
 from collections import Counter
+
 import torch
+from torch.utils.data import DataLoader
 from torch.utils.data import WeightedRandomSampler
+
+from .dataset import VolleyballDataset
 
 
 def make_weighted_sampler(dataset):
@@ -30,13 +32,20 @@ def get_data_loader(pkl_path,
                     batch_size: int,
                     num_workers: int,
                     ):
-    train_dataset = VolleyballDataset(pkl_path,videos_path,split="train",mode=mode,
+    train_dataset = VolleyballDataset(pkl_path,
+                                      videos_path,
+                                      split="train",
+                                      mode=mode,
                                       frame_transform=frame_transform,
                                       crop_transform=crop_transform
                                       )
 
     val_dataset = VolleyballDataset(pkl_path,
-videos_path,split="val",mode=mode,frame_transform=frame_transform,crop_transform=crop_transform)
+                                    videos_path,
+                                    split="val",
+                                    mode=mode,
+                                    frame_transform=frame_transform,
+                                    crop_transform=crop_transform)
 
     test_dataset = VolleyballDataset(pkl_path,
                                      videos_path,

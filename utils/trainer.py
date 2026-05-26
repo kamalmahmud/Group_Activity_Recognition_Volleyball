@@ -7,7 +7,14 @@ from tqdm import tqdm
 from .evaluator import evaluate
 
 
-def train_one_epoch(model, loader, criterion, optimizer, device, epoch, scaler):
+def train_one_epoch(model,
+                    loader,
+                    criterion,
+                    optimizer,
+                    device,
+                    epoch,
+                    scaler
+                    ):
     model.train()
     running_loss = 0.0
     correct = 0
