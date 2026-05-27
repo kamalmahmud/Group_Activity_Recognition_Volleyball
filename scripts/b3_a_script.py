@@ -25,8 +25,8 @@ if __name__ == "__main__":
     run(
         model=model,
         mode="person",
-        num_epochs=10,
-        batch_size=32,
+        num_epochs=15,
+        batch_size=16,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
