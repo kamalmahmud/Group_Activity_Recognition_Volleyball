@@ -17,12 +17,18 @@ if torch.cuda.device_count() > 1:
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
 
-optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimizer = AdamW([
+    {"params": model.model.parameters(), "lr": 1e-5},        # ResNet50
+    {"params": model.lstm.parameters(), "lr": 1e-4},         # LSTM
+    {"params": model.person_classifier.parameters(), "lr": 1e-4},
+], weight_decay=1e-4)
+
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
     mode="min",
     factor=0.5,
-    patience=3
+    patience=3,
+    min_lr=[1e-7, 1e-6, 1e-6]
 )
 
 if __name__ == "__main__":
