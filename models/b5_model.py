@@ -21,10 +21,13 @@ class B5Model(nn.Module):
         self.fusion_dim = in_features + hidden_size  # 2048 + 2048
         self.person_classifier = nn.Sequential(
             nn.LayerNorm(self.fusion_dim),
-            nn.Linear(self.fusion_dim, 512),
+            nn.Linear(self.fusion_dim, 1024),
             nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(512, num_classes)
+            nn.Dropout(0.3),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(256, num_classes),
         )
 
     def forward(self, x, return_features=False, return_all_steps=False):
