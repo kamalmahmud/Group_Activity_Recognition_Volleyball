@@ -18,7 +18,6 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     mode="min",
     factor=0.5,
     patience=3,
-    min_lr=[1e-7, 1e-6, 1e-6]
 )
 
 criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
