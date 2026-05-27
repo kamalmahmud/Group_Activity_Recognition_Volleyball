@@ -25,25 +25,15 @@ def train_one_epoch(model,
     pbar = tqdm(loader, desc=f"Epoch {epoch} [Train]", leave=False)
 
     for batch in pbar:
-        if len(batch) == 2:
-            frames, labels = batch
-            mask = None
-        elif len(batch) == 3:
-            frames, labels, mask = batch
+        frames, labels = batch
 
         frames = frames.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
 
-        if mask is not None:
-            mask = mask.to(device, non_blocking=True)
-
         optimizer.zero_grad(set_to_none=True)
 
         with torch.autocast(device_type=device_type, dtype=torch.float16, enabled=device_type == "cuda", ):
-            if mask is not None:
-                outputs = model(frames, mask=mask)
-            else:
-                outputs = model(frames)
+            outputs = model(frames)
 
             loss = criterion(outputs, labels)
 
@@ -100,7 +90,13 @@ def train(
     for epoch in range(1, num_epochs + 1):
         t0 = time.time()
 
-        train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device, epoch, scaler, )
+        train_loss, train_acc = train_one_epoch(model,
+                                                train_loader,
+                                                criterion,
+                                                optimizer,
+                                                device,
+                                                epoch,
+                                                scaler, )
 
         val_loss, val_acc, _, _ = evaluate(
             model,
