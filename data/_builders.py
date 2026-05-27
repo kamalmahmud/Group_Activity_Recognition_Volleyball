@@ -37,7 +37,7 @@ class DatasetIndexBuildersMixin:
             # Standing samples are kept only from the key frame to reduce imbalance
             # This sampling strategy can be adjusted if a better method is found
 
-            for offset in [-1, 0, 1]:
+            for offset in [-2, -1, 0, 1, 2]:
                 current_frame_id = frame_id + offset
                 path = self._img_path(video_id, clip_id, current_frame_id)
                 boxes = self._boxes_for_frame(clip_dict, current_frame_id)
