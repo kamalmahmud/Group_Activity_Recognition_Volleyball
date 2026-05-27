@@ -5,7 +5,9 @@ from torchvision import models
 
 class B5Model(nn.Module):
     def __init__(self, num_classes=9, hidden_size=1024, num_layers=1):
-        # resnet50 and lstm for player classes then take last time step for all 12 players
+        # ResNet50 extracts features from each frame.
+        # LSTM models the 9-frame sequence for one player.
+        # The last time step is used for player classification.
         super().__init__()
         self.model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
@@ -18,7 +20,7 @@ class B5Model(nn.Module):
             num_layers=num_layers,
             batch_first=True,
         )
-        self.fusion_dim = in_features + hidden_size  # 2048 + 2048
+        self.fusion_dim = in_features + hidden_size  # 2048 + hidden_size
         self.person_classifier = nn.Sequential(
             nn.LayerNorm(self.fusion_dim),
             nn.Linear(self.fusion_dim, 1024),
