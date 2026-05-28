@@ -71,14 +71,14 @@ class DatasetHelpersMixin:
     def _filter_boxes(self, boxes: Sequence[Any]) -> List[Any]:
         filtered = boxes
 
-        for box in boxes:
-            if not self.include_lost and getattr(box, "lost", 0) != 0:
-                continue
-
-            if not self.include_generated and getattr(box, "generated", 0) != 0:
-                continue
-
-            filtered.append(box)
+        # for box in boxes:
+        #     if not self.include_lost and getattr(box, "lost", 0) != 0:
+        #         continue
+        #
+        #     if not self.include_generated and getattr(box, "generated", 0) != 0:
+        #         continue
+        #
+        #     filtered.append(box)
 
         return filtered
 
