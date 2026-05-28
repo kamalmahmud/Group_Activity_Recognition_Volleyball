@@ -26,7 +26,7 @@ if __name__ == "__main__":
         model=model,
         mode="person",
         num_epochs=15,
-        batch_size=16,
+        batch_size=64,
         criterion=criterion,
         optimizer=optimizer,
         scheduler=scheduler,
