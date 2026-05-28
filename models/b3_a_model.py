@@ -12,9 +12,8 @@ class B3AModel(nn.Module):
 
         self.model.fc = nn.Sequential(
             nn.Linear(in_features, 256),
-            nn.BatchNorm1d(256),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.Linear(256, num_classes),
         )
 
