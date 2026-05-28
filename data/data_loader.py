@@ -21,11 +21,11 @@ def count_sample_labels(dataset, split_name: str):
 
     class_counts = Counter(labels)
 
-    print(f"\n{split_name} label counts:")
+    print(f"{split_name} label counts:")
     for label, count in sorted(class_counts.items()):
         print(f"  Label {label}: {count}")
 
-    print(f"{split_name} total samples: {len(labels)}")
+    print(f"{split_name} total samples: {len(labels)}\n")
 
     return class_counts
 
@@ -98,6 +98,7 @@ def get_data_loader(
         pin_memory=True,
         prefetch_factor=2,
         persistent_workers=True,
+        drop_last=True,
     )
 
     val_loader = DataLoader(
