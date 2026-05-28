@@ -87,13 +87,13 @@ def get_data_loader(
     count_sample_labels(val_dataset, "Val")
     count_sample_labels(test_dataset, "Test")
 
-    # train_sampler = make_weighted_sampler(train_dataset)
+    train_sampler = make_weighted_sampler(train_dataset)
 
     train_loader = DataLoader(
         dataset=train_dataset,
-        shuffle=True,
+        # shuffle=True,
         batch_size=batch_size,
-        # sampler=train_sampler,
+        sampler=train_sampler,
         num_workers=num_workers,
         pin_memory=True,
         prefetch_factor=2,
