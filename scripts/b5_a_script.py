@@ -11,7 +11,7 @@ CLASS_NAMES = PLAYER_LABELS.keys()
 
 model = B5Model(num_classes=len(CLASS_NAMES)).to(device)
 
-optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+optimizer = AdamW(model.parameters(), lr=1e-5, weight_decay=1e-4)
 
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
