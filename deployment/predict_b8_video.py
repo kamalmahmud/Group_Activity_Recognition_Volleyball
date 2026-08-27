@@ -128,9 +128,68 @@ def read_segments(path):
     return out
 
 
-def load_b8(path, device):
-    model = B8RuntimeModel()
+def _strip_common_wrappers(state):
+    """
+    Remove wrappers commonly introduced by DataParallel, torch.compile,
+    Lightning-style containers, or nested model wrappers.
+    """
+    state = dict(state)
+    prefixes = ("module.", "_orig_mod.", "model.")
 
+    changed = True
+    while changed and state:
+        changed = False
+        for prefix in prefixes:
+            if all(k.startswith(prefix) for k in state):
+                state = {k[len(prefix):]: v for k, v in state.items()}
+                changed = True
+                break
+    return state
+
+
+def _infer_b8_dimensions(state):
+    required = [
+        "player_lstm.weight_hh_l0",
+        "frame_lstm.weight_hh_l0",
+        "frame_lstm.weight_ih_l0",
+        "classifier.1.weight",
+        "classifier.4.weight",
+    ]
+
+    missing = [k for k in required if k not in state]
+    if missing:
+        first_keys = list(state.keys())[:30]
+        raise RuntimeError(
+            "Checkpoint does not expose the expected B8 parameter names.\n"
+            f"Missing required keys: {missing}\n"
+            f"First checkpoint keys: {first_keys}"
+        )
+
+    player_hidden = int(state["player_lstm.weight_hh_l0"].shape[1])
+    frame_hidden = int(state["frame_lstm.weight_hh_l0"].shape[1])
+    frame_input = int(state["frame_lstm.weight_ih_l0"].shape[1])
+    classifier_hidden = int(state["classifier.1.weight"].shape[0])
+    num_classes = int(state["classifier.4.weight"].shape[0])
+
+    expected_frame_input = 2 * (2048 + player_hidden)
+    if frame_input != expected_frame_input:
+        raise RuntimeError(
+            "Checkpoint uses a B8 frame-LSTM input dimension that does not match "
+            "the repository's B8 feature construction.\n"
+            f"player_hidden_size={player_hidden}\n"
+            f"checkpoint frame_lstm input_size={frame_input}\n"
+            f"expected 2*(2048+player_hidden)={expected_frame_input}"
+        )
+
+    return {
+        "player_hidden_size": player_hidden,
+        "frame_hidden_size": frame_hidden,
+        "classifier_hidden_size": classifier_hidden,
+        "num_classes": num_classes,
+    }
+
+
+def load_b8(path, device):
     try:
         ckpt = torch.load(path, map_location="cpu", weights_only=False)
     except TypeError:
@@ -147,12 +206,59 @@ def load_b8(path, device):
         state = ckpt
         meta = {}
 
-    # Support DataParallel checkpoints if needed.
-    if state and all(k.startswith("module.") for k in state):
-        state = {k[len("module."):]: v for k, v in state.items()}
+    if not isinstance(state, dict):
+        raise RuntimeError(
+            f"Unsupported checkpoint payload type: {type(state).__name__}"
+        )
 
-    model.load_state_dict(state, strict=True)
+    state = _strip_common_wrappers(state)
+    dims = _infer_b8_dimensions(state)
+
+    print(
+        "Checkpoint architecture inferred: "
+        f"player_hidden={dims['player_hidden_size']}, "
+        f"frame_hidden={dims['frame_hidden_size']}, "
+        f"classifier_hidden={dims['classifier_hidden_size']}, "
+        f"classes={dims['num_classes']}"
+    )
+
+    if dims["num_classes"] != len(CLASS_NAMES):
+        raise RuntimeError(
+            f"Checkpoint has {dims['num_classes']} output classes, "
+            f"but deployment expects {len(CLASS_NAMES)}: {CLASS_NAMES}"
+        )
+
+    model = B8RuntimeModel(**dims)
+
+    try:
+        model.load_state_dict(state, strict=True)
+    except RuntimeError as exc:
+        expected = model.state_dict()
+        missing = [k for k in expected if k not in state]
+        unexpected = [k for k in state if k not in expected]
+        shape_mismatches = [
+            (k, tuple(state[k].shape), tuple(expected[k].shape))
+            for k in expected
+            if k in state and tuple(state[k].shape) != tuple(expected[k].shape)
+        ]
+
+        raise RuntimeError(
+            "B8 checkpoint is still incompatible after automatic normalization.\n"
+            f"Missing keys ({len(missing)}): {missing[:20]}\n"
+            f"Unexpected keys ({len(unexpected)}): {unexpected[:20]}\n"
+            f"Shape mismatches ({len(shape_mismatches)}): {shape_mismatches[:20]}\n"
+            f"Original load_state_dict error:\n{exc}"
+        ) from exc
+
     model.eval().to(device)
+
+    meta = {
+        **meta,
+        "player_hidden_size": dims["player_hidden_size"],
+        "frame_hidden_size": dims["frame_hidden_size"],
+        "classifier_hidden_size": dims["classifier_hidden_size"],
+        "num_classes": dims["num_classes"],
+    }
     return model, meta
 
 

@@ -7,9 +7,13 @@ from torchvision import models
 
 class B8RuntimeModel(nn.Module):
     """
-    Same module structure as models/b8_model.py, but ResNet50 is created with
-    weights=None so deployment never needs to download ImageNet weights.
-    The trained checkpoint supplies every parameter through load_state_dict().
+    Deployment-equivalent B8 model.
+
+    ResNet50 is intentionally created with weights=None: all learned weights are
+    restored from the B8 checkpoint, so deployment never needs an ImageNet download.
+
+    Hidden dimensions are configurable because older/local B8 checkpoints may
+    have been trained before the current repository defaults were finalized.
     """
 
     def __init__(
@@ -17,6 +21,7 @@ class B8RuntimeModel(nn.Module):
         num_classes: int = 8,
         player_hidden_size: int = 2048,
         frame_hidden_size: int = 1024,
+        classifier_hidden_size: int = 256,
     ):
         super().__init__()
 
@@ -41,15 +46,16 @@ class B8RuntimeModel(nn.Module):
 
         self.classifier = nn.Sequential(
             nn.LayerNorm(frame_hidden_size),
-            nn.Linear(frame_hidden_size, 256),
+            nn.Linear(frame_hidden_size, classifier_hidden_size),
             nn.ReLU(),
             nn.Dropout(0.3),
-            nn.Linear(256, num_classes),
+            nn.Linear(classifier_hidden_size, num_classes),
         )
 
     def forward(self, x):
         # x: [B, 12, T, 3, 224, 224]
         b, n, t, c, h, w = x.shape
+
         if n != 12:
             raise ValueError(f"B8 expects 12 player slots, got {n}")
 
